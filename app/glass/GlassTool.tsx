@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ShareButton, THEME_KEY, isDark, Versions, readSaved, writeSaved, useStored, usePageColors, type ThemeName } from "../lab";
+import { ShareButton, THEME_KEY, onSync, isDark, Versions, readSaved, writeSaved, useStored, usePageColors, type ThemeName } from "../lab";
 import { BASE_COLORS } from "../SandText";
 import { draw, loadWindow, paint, Layers } from "./engine";
 import { rgb, useWindow } from "./useWindow";
@@ -38,9 +38,13 @@ export default function GlassTool() {
   // were picked there for that theme. Lines use its line colour.
   const [home, setHome] = useState<Partial<Record<ThemeName, Partial<(typeof BASE_COLORS)["light"]>>>>({});
   useEffect(() => {
-    setHome(readSaved("crucible-site:colors-home") || {});
-    const name = readSaved<{ name?: ThemeName }>(THEME_KEY)?.name;
-    if (name && BASE_COLORS[name] && name !== look.theme) setLook((l) => ({ ...l, theme: name }));
+    const load = () => {
+      setHome(readSaved("crucible-site:colors-home") || {});
+      const name = readSaved<{ name?: ThemeName }>(THEME_KEY)?.name;
+      if (name && BASE_COLORS[name]) setLook((l) => (l.theme === name ? l : { ...l, theme: name }));
+    };
+    load();
+    return onSync(["crucible-site:colors-home", THEME_KEY], load);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const picked = { ...(BASE_COLORS[look.theme] || BASE_COLORS.light), ...home[look.theme] };
