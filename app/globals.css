@@ -50,7 +50,7 @@ body {
 }
 
 .column p {
-  margin: 0 0 1.2em;
+  margin: 0 0 var(--text-gap, 1.2em);
   /* Justified, with three things that keep the gaps small: words may break
      with a hyphen, the base word space is tighter so stretched lines land
      near normal, and the browser balances line breaks across the paragraph. */
