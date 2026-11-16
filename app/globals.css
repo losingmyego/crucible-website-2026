@@ -516,6 +516,12 @@ body {
   mask-image: radial-gradient(ellipse 62% 75% at 50% 45%, #000 40%, transparent 100%);
 }
 
+/* The etched cathedral fills the screen: only its far corners fade. */
+.cathedral .nave.etched {
+  -webkit-mask-image: radial-gradient(ellipse 85% 95% at 50% 50%, #000 60%, transparent 100%);
+  mask-image: radial-gradient(ellipse 85% 95% at 50% 50%, #000 60%, transparent 100%);
+}
+
 /* The window tool's panel: sections that fold, some with an on/off switch. */
 .panel .fold {
   border-top: 1px solid rgba(0, 0, 0, 0.14);

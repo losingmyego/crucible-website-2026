@@ -222,7 +222,10 @@ export default function Etched({ outline, look, ink, strength, top, size, scroll
       gl.uniform1i(U("img"), 0);
       gl.uniform2f(U("res"), W, H);
       gl.uniform2f(U("centre"), cx, cy);
-      gl.uniform1f(U("tall"), look.etchSize * H);
+      // The picture is centred on the window, which sits high on the screen.
+      // It is never drawn so small that it stops short of an edge of the screen.
+      const cover = 1.12 * Math.max((H - cy) / (1 - BOARD.cy), cy / BOARD.cy, Math.max(cx, W - cx) / (0.5 * ASPECT));
+      gl.uniform1f(U("tall"), Math.max(look.etchSize * H, cover));
       gl.uniform1f(U("px"), dpr);
       gl.uniform1i(U("field"), 1);
       gl.uniform1f(U("lines"), Math.max(0.8, look.etchLines));
