@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import SandText, { sandNeck } from "../SandText";
 import Rays from "../glass/Rays";
-import { isDark, useStored } from "../lab";
+import { SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
+import { isDark, readSaved, useStored, writeSaved } from "../lab";
 import WindowCanvas from "../glass/WindowCanvas";
 import { GLASS_LOOK } from "../glass/look";
 import Nave from "../glass/Nave";
@@ -39,19 +40,40 @@ const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 
 // A soft drone with slow voices, made in the browser. A stand-in for a real
 // recording of chant, which would replace it.
+// The sound starts with the page. A browser will not let a page make sound
+// until the visitor has clicked, tapped or pressed a key, so it waits for the
+// first of those and then fades in. Turning it off is remembered.
+const SOUND_KEY = "crucible-site:sound";
 function useChant() {
   const [on, setOn] = useState(false);
   const stop = useRef<(() => void) | null>(null);
-  useEffect(() => () => stop.current?.(), []);
+  useEffect(() => {
+    if (readSaved<{ off?: boolean }>(SOUND_KEY)?.off) return;
+    start();
+    return () => stop.current?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const toggle = () => {
     if (on) {
       stop.current?.();
       stop.current = null;
       setOn(false);
+      writeSaved(SOUND_KEY, { off: true });
       return;
     }
+    writeSaved(SOUND_KEY, { off: false });
+    start();
+  };
+  const start = () => {
+    if (stop.current) return;
     const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ac = new AC();
+    const wake = () => {
+      if (ac.state === "suspended") ac.resume();
+    };
+    const gestures = ["pointerdown", "keydown", "touchstart"] as const;
+    gestures.forEach((g) => window.addEventListener(g, wake, { passive: true }));
+    wake();
     const master = ac.createGain();
     master.gain.value = 0;
     master.gain.linearRampToValueAtTime(0.22, ac.currentTime + 4);
@@ -112,6 +134,7 @@ function useChant() {
     };
     const ends = [voice(73.42, 0.5, false), voice(146.83, 0.45, false), voice(220.0, 0.3, true), voice(174.61, 0.22, true)];
     stop.current = () => {
+      gestures.forEach((g) => window.removeEventListener(g, wake));
       timers.forEach(clearTimeout);
       master.gain.cancelScheduledValues(ac.currentTime);
       master.gain.setTargetAtTime(0, ac.currentTime, 0.4);
@@ -183,6 +206,14 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
       clearTimeout(late);
     };
   }, []);
+  // The text drifts into place during the opening; once it has settled, the
+  // dust is told to measure where the words ended up.
+  useEffect(() => {
+    if (!go) return;
+    const done = setTimeout(() => window.dispatchEvent(new Event("resize")), look.open * 4200);
+    return () => clearTimeout(done);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [go]);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -196,7 +227,7 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
     >
       {glass.cathedral > 0 && <Nave outline={outline} look={glass} ink={line} strength={glass.cathedral} top={glass.top} size={glass.size} walk={glass.walk} scroll={glass.walkScroll} play={1} />}
       <div className="beam" />
-      {(glass.rays > 0 || glass.rayShade > 0) && <Rays outline={outline} look={glass} ink={ink} top={glass.top} size={glass.size} dark={dark} />}
+      {(glass.rays > 0 || glass.rayShade > 0) && <Rays outline={outline} look={glass} ink={ink} top={glass.top} size={glass.size} dark={dark} intro={go ? look.open : 0} />}
       {look.scrim > 0 && (
         <div
           className="scrim"
@@ -292,10 +323,10 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
           <span>Research</span>
           <span>Team</span>
         </nav>
-        <button onClick={chant.toggle} aria-pressed={chant.on}>
-          Sound {chant.on ? "on" : "off"}
-        </button>
       </header>
+      <button className="sound" onClick={chant.toggle} aria-pressed={chant.on} aria-label={chant.on ? "Turn sound off" : "Turn sound on"}>
+        {chant.on ? <SpeakerHigh size={18} /> : <SpeakerSlash size={18} />}
+      </button>
       <SandText
         paragraphs={paragraphs}
         variant={{
