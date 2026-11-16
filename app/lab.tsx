@@ -317,15 +317,26 @@ export function Panel<T extends Record<string, number | string>>({
 
 // A small button that shows or hides the settings panel. The panel is for
 // working on the page and starts hidden; the choice is remembered.
+//
+// The settings are for working on the site, so the button only appears on a
+// working copy: this computer, or a branch preview (their addresses contain
+// "-git-"). On the live address there is no button, no panel and no timeline.
+// Adding ?settings to the live address brings them back for that visit.
 export function PanelToggle() {
   const [open, setOpen] = useState(false);
+  const [working, setWorking] = useState(false);
   useEffect(() => {
+    const host = location.hostname;
+    const ok = host === "localhost" || host === "127.0.0.1" || host.includes("-git-") || new URLSearchParams(location.search).has("settings");
+    setWorking(ok);
+    if (!ok) return;
     const saved = readSaved<{ open?: boolean }>(PREFIX + "panel");
     if (saved?.open) setOpen(true);
   }, []);
   useEffect(() => {
     document.documentElement.toggleAttribute("data-panel", open);
   }, [open]);
+  if (!working) return null;
   return (
     <button
       className="panel-toggle"
