@@ -1106,11 +1106,10 @@ html[data-options][data-timeline][data-panel] .panel {
   text-align: var(--text-last, left);
 }
 .column .end-mark {
-  --s: calc(20 / 381.4);
   display: inline-block;
-  width: calc(282.5px * var(--s));
-  height: 20px;
+  width: 24px;
+  height: 24px;
   background: var(--ink);
-  -webkit-mask: url(/mark/symbol-light.svg) calc(-58.7px * var(--s)) calc(-9.4px * var(--s)) / calc(400px * var(--s)) calc(400px * var(--s)) no-repeat;
-  mask: url(/mark/symbol-light.svg) calc(-58.7px * var(--s)) calc(-9.4px * var(--s)) / calc(400px * var(--s)) calc(400px * var(--s)) no-repeat;
+  -webkit-mask: url(/mark/symbol-light.svg) center / contain no-repeat;
+  mask: url(/mark/symbol-light.svg) center / contain no-repeat;
 }
