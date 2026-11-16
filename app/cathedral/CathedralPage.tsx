@@ -1,5 +1,7 @@
 "use client";
 
+import SiteNav from "../site/SiteNav";
+
 import { useEffect, useRef, useState } from "react";
 import SandText, { sandNeck } from "../SandText";
 import Rays from "../glass/Rays";
@@ -385,14 +387,7 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
 
   return (
     <>
-      <header className="cathedral-bar">
-        {/* Placeholder labels only, to show a header can sit over the hero. */}
-        <nav>
-          <span>Portfolio</span>
-          <span>Research</span>
-          <span>Team</span>
-        </nav>
-      </header>
+      <SiteNav />
       {veil && (
         <button className={`gate${entered ? " leaving" : ""}`} onClick={enter} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()} aria-label="Enter Crucible" autoFocus>
           <span className="gate-mark" role="img" aria-label="Crucible" />
