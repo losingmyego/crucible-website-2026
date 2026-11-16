@@ -199,15 +199,30 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
       colLeft = cr.left + sx;
       colWidth = cr.width;
       const els = column.querySelectorAll<HTMLElement>(".w");
+      const shiftOf = (el: Element) => {
+        const t = getComputedStyle(el).transform;
+        return t && t !== "none" ? new DOMMatrixReadOnly(t).m42 : 0;
+      };
+      const lift = shiftOf(column);
       const prev = words;
       const range = document.createRange();
       words = Array.from(els, (el, i) => {
         const img = el instanceof HTMLImageElement ? el : null;
         const text = (el.textContent ?? "").replace(/\u00ad/g, "");
-        const rects = img ? [el.getBoundingClientRect()] : Array.from(el.getClientRects()).filter((r) => r.width > 0);
-        const box = (r: DOMRect, t: string): Part => ({ text: t, img, x: r.left + sx, y: r.top + sy, w: r.width, h: r.height });
-        let parts: Part[];
         const node = el.firstChild;
+        // Measure the letters themselves, not the word's box: a word set as a
+        // block has a box as tall as the line, which would put the sand a few
+        // pixels above the letters it replaces.
+        let rects: DOMRect[];
+        if (img) rects = [el.getBoundingClientRect()];
+        else if (node && node.nodeType === Node.TEXT_NODE) {
+          range.selectNodeContents(node);
+          rects = Array.from(range.getClientRects()).filter((r) => r.width > 0);
+        } else rects = Array.from(el.getClientRects()).filter((r) => r.width > 0);
+        // While the opening is still moving the column or this word, measure where it will come to rest.
+        const dy = lift + shiftOf(el);
+        const box = (r: DOMRect, t: string): Part => ({ text: t, img, x: r.left + sx, y: r.top + sy - dy, w: r.width, h: r.height });
+        let parts: Part[];
         if (rects.length === 2 && node && node.nodeType === Node.TEXT_NODE) {
           // Hyphenated across two lines: find the letter where line two begins.
           const raw = node.textContent ?? "";

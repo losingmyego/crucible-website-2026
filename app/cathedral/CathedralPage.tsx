@@ -25,8 +25,9 @@ import { outlineOf, Outline } from "../glass/nave";
 
 type Look = {
   walk: number; // how far the cathedral comes toward you as you scroll
-  align: "left" | "justified"; // how the lines of text are set
-  font: "sans" | "mono"; // the text face. Sans is a system face, a stand-in only.
+  align: "left" | "center" | "justified"; // how the lines of text are set
+  font: "times" | "sans" | "mono"; // the text face. Times and sans are system faces.
+  wrap: "normal" | "tidy" | "even"; // how lines break: as they fall, avoiding short last lines, or all lines near the same length
   textSize: number; // in pixels
   open: number; // length of the opening: 1 is the set pace, 2 twice as long
   scrim: number; // strength of the shade rising from the bottom of the screen, behind the text
@@ -36,8 +37,9 @@ type Look = {
 };
 
 // Neesh's settings as of 2026-11-16.
-const LOOK: Look = { walk: 0.5, font: "sans", align: "left", open: 1.2, textSize: 15, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page" };
+const LOOK: Look = { walk: 0.5, font: "times", align: "left", wrap: "tidy", open: 1.2, textSize: 15, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page" };
 const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+const TIMES = '"Times New Roman", Times, serif';
 
 // A soft drone with slow voices, made in the browser. A stand-in for a real
 // recording of chant, which would replace it.
@@ -267,9 +269,12 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
   useEffect(() => {
     const root = document.documentElement;
     if (look.font === "sans") root.style.setProperty("--text-font", SANS);
+    else if (look.font === "times") root.style.setProperty("--text-font", TIMES);
     else root.style.removeProperty("--text-font");
     // Justified text in the sans face keeps its normal word spaces; the mono face is tightened a little.
-    root.style.setProperty("--text-align", look.align === "left" ? "left" : "justify");
+    root.style.setProperty("--text-align", look.align === "justified" ? "justify" : look.align === "center" ? "center" : "left");
+    root.style.setProperty("--text-wrap", look.wrap === "tidy" ? "pretty" : look.wrap === "even" ? "balance" : "wrap");
+    root.style.setProperty("--text-last", look.align === "center" ? "center" : "left");
     root.style.setProperty("--text-hyphens", "none"); // words are never broken across lines here
     root.style.setProperty("--text-word", "nowrap");
     root.style.setProperty("--text-space", look.align === "justified" && look.font === "mono" ? "-0.18em" : "0em");
@@ -277,9 +282,9 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
     root.style.setProperty("--text-size", `${look.textSize}px`);
     root.style.setProperty("--text-width", `${look.textWidth}px`);
     return () => {
-      for (const k of ["--text-font", "--text-size", "--text-width", "--text-align", "--text-hyphens", "--text-word", "--text-space", "--o"]) root.style.removeProperty(k);
+      for (const k of ["--text-wrap", "--text-last", "--text-font", "--text-size", "--text-width", "--text-align", "--text-hyphens", "--text-word", "--text-space", "--o"]) root.style.removeProperty(k);
     };
-  }, [look.font, look.align, look.textSize, look.textWidth, look.open]);
+  }, [look.wrap, look.font, look.align, look.textSize, look.textWidth, look.open]);
 
   const slider = (key: keyof Look, label: string, min: number, max: number, step: number) => (
     <label>
@@ -307,16 +312,23 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
       {slider("textSize", "text size (px)", 10, 28, 0.5)}
       {slider("textWidth", "text column width (px)", 280, 900, 10)}
       <div className="actions">
-        {(["sans", "mono"] as const).map((f) => (
+        {(["times", "sans", "mono"] as const).map((f) => (
           <button key={f} className={look.font === f ? "on" : ""} onClick={() => set({ font: f })}>
-            {f} text
+            {f === "times" ? "times new roman" : f}
           </button>
         ))}
       </div>
       <div className="actions">
-        {(["left", "justified"] as const).map((f) => (
+        {(["left", "center", "justified"] as const).map((f) => (
           <button key={f} className={look.align === f ? "on" : ""} onClick={() => set({ align: f })}>
-            {f}
+            {f === "center" ? "centred" : f}
+          </button>
+        ))}
+      </div>
+      <div className="actions">
+        {(["normal", "tidy", "even"] as const).map((f) => (
+          <button key={f} className={look.wrap === f ? "on" : ""} onClick={() => set({ wrap: f })}>
+            {f === "tidy" ? "tidy breaks" : f === "even" ? "even lines" : "plain breaks"}
           </button>
         ))}
       </div>

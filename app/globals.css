@@ -52,19 +52,19 @@ body {
      with a hyphen, the base word space is tighter so stretched lines land
      near normal, and the browser balances line breaks across the paragraph. */
   text-align: var(--text-align, justify);
-  text-align-last: left;
+  text-align-last: var(--text-last, left);
   -webkit-hyphens: var(--text-hyphens, auto);
   hyphens: var(--text-hyphens, auto);
   hyphenate-limit-chars: 5 2 3;
   word-spacing: var(--text-space, -0.18em);
-  text-wrap: pretty;
+  text-wrap: var(--text-wrap, pretty);
 }
 
 /* A section header inside the text: always the mono face. */
 .column p.head {
   font-family: var(--font-mono);
   margin: 3.5em 0 1.6em;
-  text-align: left;
+  text-align: var(--text-last, left);
   hyphens: none;
   -webkit-hyphens: none;
   word-spacing: normal;
