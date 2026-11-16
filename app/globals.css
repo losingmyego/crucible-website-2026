@@ -52,6 +52,7 @@
 html,
 body {
   margin: 0;
+  overflow-x: clip; /* nothing may make the page wider than the screen */
   background: var(--paper);
   color: var(--ink);
 }
@@ -79,7 +80,9 @@ body {
   position: relative;
   z-index: 1;
   width: var(--text-width, 400px);
-  max-width: calc(100vw - 32px);
+  /* The perspective makes lines wider toward the bottom of the screen, so on a
+     narrow screen the column is held in by that much to keep its side margins. */
+  max-width: calc((100vw - 32px) / (1 + var(--text-tilt, 0) / 100));
   margin: 0 auto;
   padding: 45vh 0 110vh;
 }
@@ -1122,4 +1125,46 @@ html[data-options][data-timeline][data-panel] .panel {
   background: var(--ink);
   -webkit-mask: url(/mark/symbol-light.svg) center / contain no-repeat;
   mask: url(/mark/symbol-light.svg) center / contain no-repeat;
+}
+
+/* On a phone the header row is full with the wordmark and the page links, so
+   the option switcher sits on a row of its own just under it, at the right,
+   as numbers only. Text never reaches that part of the screen. */
+@media (max-width: 720px) {
+  .cathedral-bar {
+    gap: 18px;
+  }
+  .cathedral-bar nav {
+    gap: 13px;
+  }
+  .cathedral-bar .bar-word {
+    flex: none;
+  }
+  .options {
+    top: 40px;
+    padding: 0 10px;
+    gap: 0;
+  }
+  .options span {
+    display: none;
+  }
+  .options button {
+    min-width: 26px;
+    height: 26px;
+  }
+  .sound {
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* The narrowest phones: pull the header in a little more so every link fits. */
+@media (max-width: 380px) {
+  .cathedral-bar {
+    gap: 11px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .cathedral-bar nav {
+    gap: 8px;
+  }
 }
