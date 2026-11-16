@@ -331,7 +331,8 @@ export default function GlassTool() {
               "etch",
               "the engraving",
               <>
-                {slider("etchSize", "picture size", 0.8, 3, 0.01)}
+                {slider("etchSize", "picture size", 0.6, 3, 0.01)}
+                {slider("etchDrop", "picture lower or higher", -0.2, 0.6, 0.01)}
                 {slider("etchClear", "clear room round the window", 0.5, 2.5, 0.01)}
                 {choice("etchInk", [["dark", "ink the shadows"], ["light", "ink the lights"]])}
                 {slider("etchLines", "engraving spacing", 0.8, 12, 0.1)}

@@ -20,6 +20,7 @@ import { Outline } from "./nave";
 export type EtchLook = {
   naveView: "drawn" | "etched"; // which cathedral: the drawn one, or this one
   etchSize: number; // height of the picture, in screen heights
+  etchDrop: number; // how far the picture sits below the window's centre, in screen heights
   etchLines: number; // distance between engraved lines, in pixels
   etchWeight: number; // line weight
   etchBend: number; // contour flow: how much the lines bend round forms
@@ -36,7 +37,8 @@ export type EtchLook = {
 
 export const ETCH_LOOK: EtchLook = {
   naveView: "drawn",
-  etchSize: 1.5,
+  etchSize: 1.25,
+  etchDrop: 0.2,
   etchLines: 3.2,
   etchWeight: 1,
   etchBend: 0.65,
@@ -52,8 +54,8 @@ export const ETCH_LOOK: EtchLook = {
 };
 
 // Where the board sits in the render, as shares of its width and height.
-const BOARD = { cx: 0.4995, cy: 0.4954, hw: 0.092, hh: 0.305 };
-const ASPECT = 2048 / 1148;
+const BOARD = { cx: 0.501, cy: 0.4955, hw: 0.08, hh: 0.243 };
+const ASPECT = 2944 / 1648;
 
 const VERT = `#version 300 es
 in vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
@@ -63,6 +65,7 @@ uniform sampler2D img;    // the picture
 uniform sampler2D field;  // the picture, blurred: its local average
 uniform vec2 res;      // canvas size in device pixels
 uniform vec2 centre;   // where the board's centre sits, in device pixels from the top left
+uniform vec4 win;      // the window: centre and half size, in device pixels
 uniform float tall;    // picture height in device pixels
 uniform float px;      // device pixels per CSS pixel
 uniform float lines, weight, bend, cross_, detail, exposure, contrast, angle, stipple, wear, inkLight, clear;
@@ -119,9 +122,12 @@ void main() {
   // Leave the board out, with a soft edge.
   vec2 b = abs(uv - MID) / (vec2(${BOARD.hw.toFixed(4)}, ${BOARD.hh.toFixed(4)}) * clear);
   float room = smoothstep(0.88, 1.3, max(b.x, b.y));
+  // And leave the window itself clear, where it stands above the board.
+  vec2 wb = abs(q - win.xy) / (win.zw * clear);
+  room = min(room, smoothstep(1.0, 1.45, max(wb.x, wb.y)));
   // Fade at the very edge of the picture.
   vec2 m = min(uv, 1.0 - uv);
-  float fade = smoothstep(0.0, 0.1, min(m.x, m.y));
+  float fade = smoothstep(0.0, 0.05, min(m.x, m.y));
   float alpha = engraving * room * fade * strength;
   outColor = vec4(ink * alpha, alpha);
 }`;
@@ -187,7 +193,7 @@ export default function Etched({ outline, look, ink, strength, top, size, scroll
       ready = true;
       last = "";
     };
-    image.src = "/cathedral/church-tone.jpg";
+    image.src = "/cathedral/church-wide-tone.jpg";
 
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let raf = 0;
@@ -214,7 +220,8 @@ export default function Etched({ outline, look, ink, strength, top, size, scroll
       const tallWin = size * H;
       const open = outline.ratio * tallWin;
       const cx = W / 2 + outline.dx * tallWin;
-      const cy = top * H + outline.sill * tallWin - open / 2;
+      const wy = top * H + outline.sill * tallWin - open / 2; // the window's centre
+      const cy = wy + look.etchDrop * H; // the picture's middle sits lower, so there is floor to the bottom of the screen
       c.style.transformOrigin = `${(cx / W) * 100}% ${(cy / H) * 100}%`;
       gl.viewport(0, 0, W, H);
       gl.clearColor(0, 0, 0, 0);
@@ -222,9 +229,10 @@ export default function Etched({ outline, look, ink, strength, top, size, scroll
       gl.uniform1i(U("img"), 0);
       gl.uniform2f(U("res"), W, H);
       gl.uniform2f(U("centre"), cx, cy);
+      gl.uniform4f(U("win"), cx, wy, outline.hw * outline.ratio * tallWin * 1.15, open * 0.56);
       // The picture is centred on the window, which sits high on the screen.
       // It is never drawn so small that it stops short of an edge of the screen.
-      const cover = 1.12 * Math.max((H - cy) / (1 - BOARD.cy), cy / BOARD.cy, Math.max(cx, W - cx) / (0.5 * ASPECT));
+      const cover = 1.06 * Math.max((H - cy) / (1 - BOARD.cy), cy / BOARD.cy, Math.max(cx, W - cx) / (0.5 * ASPECT));
       gl.uniform1f(U("tall"), Math.max(look.etchSize * H, cover));
       gl.uniform1f(U("px"), dpr);
       gl.uniform1i(U("field"), 1);

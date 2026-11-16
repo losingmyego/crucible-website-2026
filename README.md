@@ -42,7 +42,7 @@ To make new settings the default for everyone, put the new values in those four 
 - `app/text.ts`: the homepage text (`HOME`) and filler for the topography pages.
 - `app/cathedral/CathedralPage.tsx`: the homepage, its backdrop and the opening.
 - `app/SandText.tsx`: the text column and the dust.
-- `app/glass/`: the window (`engine.ts`, `useWindow.ts`), the drawn cathedral (`nave.ts`), the etched cathedral (`Etched.tsx`, an engraving of `public/cathedral/church-tone.jpg`; pick it in the tool under "which cathedral"), the light rays (`Rays.tsx`) and the tool (`GlassTool.tsx`).
+- `app/glass/`: the window (`engine.ts`, `useWindow.ts`), the drawn cathedral (`nave.ts`), the etched cathedral (`Etched.tsx`, an engraving of `public/cathedral/church-wide-tone.jpg`; pick it in the tool under "which cathedral"), the light rays (`Rays.tsx`) and the tool (`GlassTool.tsx`).
 - `app/topo/TopoPage.tsx`: the topography page.
 - `app/lab.tsx`: themes, remembered settings, smooth scrolling and the panel.
 - `public/windows/`: window drawings as SVG. `public/topo/`: the height map.
