@@ -95,7 +95,8 @@ body {
 /* A section header inside the text: always the mono face. */
 .column p.head {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--head-size, 13px);
+  letter-spacing: var(--label-track, 0.5px);
   margin: 3.5em 0 1.6em;
   text-align: var(--text-last, left);
   hyphens: none;
@@ -459,8 +460,9 @@ body {
   align-items: center;
   padding: 18px 24px;
   pointer-events: none;
-  font-size: 11px;
-  letter-spacing: 0.12em;
+  font-family: var(--font-mono);
+  font-size: var(--nav-size, 12px);
+  letter-spacing: var(--label-track, 0.5px);
   text-transform: uppercase;
   color: var(--ink);
 }

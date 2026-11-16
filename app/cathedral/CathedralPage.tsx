@@ -36,6 +36,9 @@ type Look = {
   textSize: number; // in pixels
   textLine: number; // line height, as a multiple of the text size
   textGap: number; // space between paragraphs, as a multiple of the text size
+  navSize: number; // the header links, in px
+  headSize: number; // section headers in the text, in px
+  labelTrack: number; // letter spacing of both, in px
   textTrack: number; // letter spacing, in hundredths of the text size (0 = as the face is drawn)
   open: number; // length of the opening: 1 is the set pace, 2 twice as long
   scrim: number; // strength of the shade rising from the bottom of the screen, behind the text
@@ -50,7 +53,7 @@ type Look = {
 };
 
 // Neesh's settings as of 2026-11-16.
-const LOOK: Look = { walk: 0.5, font: "asta", textWeight: 350, brandWeight: 400, align: "left", wrap: "tidy", open: 1.2, textSize: 15, textLine: 1.6, textGap: 1.8, textTrack: 0, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page", scrimColor: "#2a1c15", scrimShape: "linear", scrimSolid: 0.25, scrimEnd: 1, scrimWide: 1.2 };
+const LOOK: Look = { walk: 0.5, font: "asta", textWeight: 350, brandWeight: 400, align: "left", wrap: "tidy", open: 1.2, textSize: 15, textLine: 1.6, textGap: 1.8, textTrack: 0, navSize: 12, headSize: 13, labelTrack: 0.5, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page", scrimColor: "#2a1c15", scrimShape: "linear", scrimSolid: 0.25, scrimEnd: 1, scrimWide: 1.2 };
 const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const SEMPLICITA = '"Semplicita Pro", "Helvetica Neue", Arial, sans-serif'; // the brand face, served from public/fonts
 const ASTA = '"Asta Sans Variable", "Helvetica Neue", Arial, sans-serif';
@@ -307,6 +310,9 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
     root.style.setProperty("--text-line", String(look.textLine));
     root.style.setProperty("--text-gap", `${look.textGap}em`);
     root.style.setProperty("--text-track", `${look.textTrack / 100}em`);
+    root.style.setProperty("--nav-size", `${look.navSize}px`);
+    root.style.setProperty("--head-size", `${look.headSize}px`);
+    root.style.setProperty("--label-track", `${look.labelTrack}px`);
     // The dust measures where the words sit, so tell it they have moved.
     const moved = setTimeout(() => window.dispatchEvent(new Event("resize")), 60);
     // A served face can arrive a moment later and shift the lines.
@@ -316,7 +322,7 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
       clearTimeout(moved);
       for (const k of ["--text-wrap", "--text-last", "--text-font", "--text-size", "--text-weight", "--text-line", "--text-gap", "--text-track", "--text-width", "--text-align", "--text-hyphens", "--text-word", "--text-space", "--o"]) root.style.removeProperty(k);
     };
-  }, [look.wrap, look.font, look.textWeight, look.brandWeight, look.align, look.textSize, look.textLine, look.textGap, look.textTrack, look.textWidth]);
+  }, [look.wrap, look.font, look.textWeight, look.brandWeight, look.align, look.textSize, look.textLine, look.textGap, look.textTrack, look.navSize, look.headSize, look.labelTrack, look.textWidth]);
 
   const slider = (key: keyof Look, label: string, min: number, max: number, step: number) => (
     <label>
@@ -372,6 +378,9 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
       {slider("textLine", "line height", 1, 2.4, 0.01)}
       {slider("textGap", "space between paragraphs", 0, 5, 0.05)}
       {slider("textTrack", "letter spacing (kerning)", -5, 20, 0.1)}
+      {slider("navSize", "nav links size (px)", 9, 18, 0.5)}
+      {slider("headSize", "section header size (px)", 9, 18, 0.5)}
+      {slider("labelTrack", "nav and header letter spacing (px)", -1, 4, 0.1)}
       {slider("textWidth", "text column width (px)", 280, 900, 10)}
       <div className="actions">
         {(["semplicita", "asta", "cantarell", "times", "sans", "mono"] as const).map((f) => (
