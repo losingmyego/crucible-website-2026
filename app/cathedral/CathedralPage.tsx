@@ -320,6 +320,9 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
     }
     setEntered(true);
     setVeil(false);
+    // The sound carries on as well, unless the visitor turned it off. If the
+    // browser holds it back after the reload, it starts at the next tap or key.
+    chant.begin();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
