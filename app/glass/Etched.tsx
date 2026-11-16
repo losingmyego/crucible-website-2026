@@ -35,7 +35,9 @@ export type EtchLook = {
   etchStipple: number; // fine dots between the lines
   etchWear: number; // small gaps in the ink
   etchInk: "dark" | "light"; // ink follows the picture's shadows, or its lights
-  etchClear: number; // size of the clear room round the window, 1 = the board in the render
+  etchClear: number; // width of the clear room round the window, 1 = a little wider than the window
+  etchClearTall: number; // height of the clear room, 1 = a little taller than the window
+  etchClearSoft: number; // how gradually the engraving returns past the clear room
 };
 
 export const ETCH_LOOK: EtchLook = {
@@ -56,6 +58,8 @@ export const ETCH_LOOK: EtchLook = {
   etchWear: 0.12,
   etchInk: "light",
   etchClear: 1,
+  etchClearTall: 1,
+  etchClearSoft: 0.45,
 };
 
 // Where the board sits in the render, as shares of its width and height.
@@ -73,7 +77,9 @@ uniform sampler2D img;    // the picture
 uniform sampler2D field;  // the picture, blurred: its local average
 uniform vec2 res;      // canvas size in device pixels
 uniform vec2 centre;   // where the board's centre sits, in device pixels from the top left
-uniform vec4 win;      // the window: centre and half size, in device pixels
+uniform vec4 win;      // the clear room round the window: centre and half size, in device pixels
+uniform float rise;    // how far its pointed top stands above where its sides start to curve
+uniform float soft;    // width of its soft edge, in device pixels
 uniform float tall;    // picture height in device pixels
 uniform float eye;     // how much the floor is stretched and the roof squeezed, 1 = as the picture is
 uniform float px;      // device pixels per CSS pixel
@@ -148,9 +154,17 @@ void main() {
   // Leave the board out, with a soft edge.
   vec2 b = abs(uv - MID) / (vec2(${BOARD.hw.toFixed(4)}, ${BOARD.hh.toFixed(4)}) * clear);
   float room = smoothstep(0.88, 1.3, max(b.x, b.y));
-  // And leave the window itself clear, where it stands above the board.
-  vec2 wb = abs(q - win.xy) / (win.zw * clear);
-  room = min(room, smoothstep(1.0, 1.45, max(wb.x, wb.y)));
+  // And leave the window itself clear, where it stands above the board. The
+  // clear room is the window's own shape, a pointed arch, so the engraving
+  // comes equally close all the way round.
+  vec2 w = vec2(abs(q.x - win.x), q.y - win.y);
+  float springY = rise - win.w;
+  float radius = (rise * rise + win.z * win.z) / (2.0 * win.z);
+  vec2 v = w - win.zw;
+  float away = w.y > springY
+    ? length(max(v, 0.0)) + min(max(v.x, v.y), 0.0)
+    : length(w - vec2(win.z - radius, springY)) - radius;
+  room = min(room, smoothstep(0.0, max(soft, 1.0), away));
   // The rings stop after three; fade out before the last one ends.
   vec2 far = abs(uv - 0.5) * 2.0;
   float fade = 1.0 - smoothstep(GROW * GROW * GROW * 0.8, GROW * GROW * GROW, max(far.x, far.y));
@@ -262,7 +276,12 @@ export default function Etched({ outline, look, ink, strength, top, size, scroll
       gl.uniform1i(U("img"), 0);
       gl.uniform2f(U("res"), W, H);
       gl.uniform2f(U("centre"), cx, cy);
-      gl.uniform4f(U("win"), wx, wy, outline.hw * outline.ratio * tallWin * 1.15, open * 0.56);
+      const roomW = outline.hw * outline.ratio * tallWin * 1.15 * look.etchClear;
+      const roomH = open * 0.56 * (look.etchClearTall ?? 1);
+      const curve = outline.spring < -0.2 && outline.spring > -0.98 ? 1 + outline.spring : 0.45;
+      gl.uniform4f(U("win"), wx, wy, roomW, roomH);
+      gl.uniform1f(U("rise"), Math.min(roomH * 2, Math.max(roomW, curve * roomH * 2)));
+      gl.uniform1f(U("soft"), (look.etchClearSoft ?? 0.45) * roomW);
       gl.uniform1f(U("tall"), look.etchSize * H);
       gl.uniform1f(U("eye"), Math.pow(2, (look.etchEye - 0.5) * 3));
       gl.uniform1f(U("px"), dpr);

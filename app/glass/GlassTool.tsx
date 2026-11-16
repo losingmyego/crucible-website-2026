@@ -350,7 +350,9 @@ export default function GlassTool() {
                 {slider("etchY", "vertical position", -1, 1, 0.01)}
                 {slider("etchX", "horizontal position", -0.5, 0.5, 0.01)}
                 {slider("etchEye", "eye level", 0, 1, 0.01)}
-                {slider("etchClear", "clear room round the window", 0.5, 2.5, 0.01)}
+                {slider("etchClear", "clear room: width", 0.5, 2.5, 0.01)}
+                {slider("etchClearTall", "clear room: height", 0.5, 2.5, 0.01)}
+                {slider("etchClearSoft", "clear room: soft edge", 0, 1.5, 0.01)}
                 {choice("etchInk", [["dark", "ink the shadows"], ["light", "ink the lights"]])}
                 {slider("etchLines", "engraving spacing", 0.8, 12, 0.1)}
                 {slider("etchWeight", "line weight", 0.4, 1.6, 0.01)}
