@@ -107,7 +107,7 @@ export function writeSaved(key: string, value: unknown) {
 // (the sand views, the map views) keeps its own full set of colours for each
 // theme, so a colour changed under one theme is still there after switching
 // themes or views.
-const THEME_KEY = "crucible-site:theme";
+export const THEME_KEY = "crucible-site:theme";
 type Slots<C> = Partial<Record<ThemeName, Partial<C>>>;
 
 export function useThemeColors<C extends Record<string, string>>(

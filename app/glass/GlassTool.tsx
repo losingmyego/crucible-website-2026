@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ShareButton, THEMES, Versions, useStored, usePageColors } from "../lab";
+import { ShareButton, THEME_KEY, isDark, Versions, readSaved, writeSaved, useStored, usePageColors, type ThemeName } from "../lab";
+import { BASE_COLORS } from "../SandText";
 import { draw, loadWindow, paint, Layers } from "./engine";
 import { rgb, useWindow } from "./useWindow";
 import Rays from "./Rays";
@@ -28,8 +29,22 @@ export default function GlassTool() {
   const [upload, setUpload] = useState<{ name: string; text: string } | null>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const svgText = useRef("");
-  const set = (patch: Partial<Look>) => setLook({ ...look, ...patch });
-  const theme = THEMES[look.theme] || THEMES.light;
+  const set = (patch: Partial<Look>) => {
+    // The theme is shared with the homepage, so choosing one here chooses it there too.
+    if (patch.theme) writeSaved(THEME_KEY, { name: patch.theme });
+    setLook({ ...look, ...patch });
+  };
+  // Colours come from the homepage's settings: its theme, and whatever colours
+  // were picked there for that theme. Lines use its line colour.
+  const [home, setHome] = useState<Partial<Record<ThemeName, Partial<(typeof BASE_COLORS)["light"]>>>>({});
+  useEffect(() => {
+    setHome(readSaved("crucible-site:colors-home") || {});
+    const name = readSaved<{ name?: ThemeName }>(THEME_KEY)?.name;
+    if (name && BASE_COLORS[name] && name !== look.theme) setLook((l) => ({ ...l, theme: name }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const picked = { ...(BASE_COLORS[look.theme] || BASE_COLORS.light), ...home[look.theme] };
+  const theme = { paper: picked.paper, ink: picked.line || picked.ink };
   usePageColors(theme.paper, theme.ink);
 
   // A window dropped in earlier is remembered in this browser.
@@ -154,7 +169,7 @@ export default function GlassTool() {
     );
   };
   const all = (open: boolean) => setUi({ ...ui, open: Object.fromEntries(["drawing", "stone", "symbol", "leading", "echo", "line", "light", "rays", "page", "nave", "etch", "space", "detail", "machine", "hand"].map((k) => [k, open])) });
-  const dark = look.theme !== "light";
+  const dark = isDark(theme.paper);
 
   return (
     <>
@@ -171,7 +186,7 @@ export default function GlassTool() {
         {look.cathedral > 0 && look.naveView !== "etched" && <Nave outline={outline} look={look} ink={theme.ink} strength={look.cathedral} top={look.top} size={look.size} walk={look.walk} play={play} />}
         {look.cathedral > 0 && look.naveView === "etched" && <Etched outline={outline} look={look} ink={theme.ink} strength={look.cathedral} top={look.top} size={look.size} play={play} />}
         <div className="beam" />
-        {(look.rays > 0 || look.rayShade > 0) && <Rays outline={outline} look={look} ink={theme.ink} top={look.top} size={look.size} dark={dark} />}
+        {(look.rays > 0 || look.rayShade > 0) && <Rays outline={outline} look={look} ink={picked.ink} top={look.top} size={look.size} dark={dark} />}
         <canvas ref={canvas} className="win-canvas" style={place(layers)} />
       </div>
       <div className="panel">

@@ -65,7 +65,7 @@ type Colors = { paper: string; ink: string; far: string; line: string };
 const COLOR_DEFAULTS: Colors = { paper: "#6e6a66", ink: "#f6f6f4", far: "#e8e8e3", line: "#cecec0" };
 // Starting colours for each theme: Neesh's picks on the hero as of 2026-11-16.
 // The dust fades toward `far`. `line` colours the window and the cathedral.
-const BASE_COLORS: Record<ThemeName, Colors> = {
+export const BASE_COLORS: Record<ThemeName, Colors> = {
   light: { paper: THEMES.light.paper, ink: THEMES.light.ink, far: "#e8e8e3", line: THEMES.light.ink },
   medium: COLOR_DEFAULTS,
   dark: { paper: THEMES.dark.paper, ink: "#a6a299", far: "#1a1a17", line: "#a6a299" },
