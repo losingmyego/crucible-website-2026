@@ -190,7 +190,7 @@ export default function GlassTool() {
         {look.cathedral > 0 && look.naveView !== "etched" && <Nave outline={outline} look={look} ink={picked.nave || theme.ink} strength={look.cathedral} top={look.top} size={look.size} walk={look.walk} play={play} />}
         {look.cathedral > 0 && look.naveView === "etched" && <Etched outline={outline} look={look} ink={picked.nave || theme.ink} strength={look.cathedral} top={look.top} size={look.size} play={play} />}
         <div className="beam" />
-        {(look.rays > 0 || look.rayShade > 0) && <Rays outline={outline} look={look} ink={picked.ink} shade={picked.shade} top={look.top} size={look.size} dark={dark} />}
+        {(look.rays > 0 || look.rayShade > 0) && <Rays outline={outline} look={look} ink={picked.ink} shade={picked.shade} light={picked.rays} top={look.top} size={look.size} dark={dark} />}
         <canvas ref={canvas} className="win-canvas" style={place(layers)} />
       </div>
       <div className="panel">

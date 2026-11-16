@@ -177,6 +177,7 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
   const [paper, setPaper] = useState("#e8e8e3");
   const [line, setLine] = useState("#1a1a17");
   const [nave, setNave] = useState("#1a1a17"); // the cathedral's lines
+  const [rays, setRays] = useState(""); // the shafts of light; empty = automatic
   const [shade, setShade] = useState(""); // the darkening toward the edges; empty = automatic
   // The page colours are set on the document by the sand text; follow them.
   useEffect(() => {
@@ -189,6 +190,7 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
       setLine(lines);
       setNave(cs.getPropertyValue("--nave").trim() || lines);
       setShade(cs.getPropertyValue("--shade").trim());
+      setRays(cs.getPropertyValue("--rays").trim());
     };
     read();
     const watch = new MutationObserver(read);
@@ -248,7 +250,7 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
       {glass.cathedral > 0 && glass.naveView !== "etched" && <Nave outline={outline} look={glass} ink={nave} strength={glass.cathedral} top={glass.top} size={glass.size} walk={glass.walk} scroll={glass.walkScroll} play={1} />}
       {glass.cathedral > 0 && glass.naveView === "etched" && <Etched outline={outline} look={glass} ink={nave} strength={glass.cathedral} top={glass.top} size={glass.size} scroll={glass.walkScroll} play={1} />}
       <div className="beam" />
-      {(glass.rays > 0 || glass.rayShade > 0) && <Rays outline={outline} look={glass} ink={ink} shade={shade} top={glass.top} size={glass.size} dark={dark} intro={go ? 1 : 0} />}
+      {(glass.rays > 0 || glass.rayShade > 0) && <Rays outline={outline} look={glass} ink={ink} shade={shade} light={rays} top={glass.top} size={glass.size} dark={dark} intro={go ? 1 : 0} />}
       {look.scrim > 0 && (
         <div
           className="scrim"

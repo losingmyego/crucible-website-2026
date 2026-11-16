@@ -26,7 +26,7 @@ const rnd = (a: number, b: number) => {
 // of the page's opening (1 is the set pace), undefined shows them at once. The
 // room shades first; the shafts come last, opening out from the middle of the
 // window to the sides while they reach down the floor.
-export default function Rays({ outline, look, ink, shade, top, size, dark, intro }: { outline: Outline | null; look: RayLook; ink: string; shade?: string; top: number; size: number; dark: boolean; intro?: number }) {
+export default function Rays({ outline, look, ink, shade, light: lightColor, top, size, dark, intro }: { outline: Outline | null; look: RayLook; ink: string; shade?: string; light?: string; top: number; size: number; dark: boolean; intro?: number }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const began = useRef(0);
   const pace = useRef(intro);
@@ -39,7 +39,8 @@ export default function Rays({ outline, look, ink, shade, top, size, dark, intro
     if (!c || !outline) return;
     const g = c.getContext("2d")!;
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const light = look.rayColor === "warm" ? "255,214,176" : "255,255,255";
+    const picked = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec((lightColor || "").trim());
+    const light = picked ? `${parseInt(picked[1], 16)},${parseInt(picked[2], 16)},${parseInt(picked[3], 16)}` : look.rayColor === "warm" ? "255,214,176" : "255,255,255";
     const own = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec((shade || "").trim());
     const m = own || /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec(ink.trim());
     const shadeRgb = dark && !own ? "0,0,0" : m ? `${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)}` : "26,26,23";
@@ -125,6 +126,6 @@ export default function Rays({ outline, look, ink, shade, top, size, dark, intro
     };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [outline, look, ink, shade, top, size, dark]);
+  }, [outline, look, ink, shade, lightColor, top, size, dark]);
   return <canvas ref={canvas} className="rays-canvas" />;
 }
