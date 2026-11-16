@@ -96,7 +96,6 @@ export const GLASS_LOOK: Look = {
   raySpread: 0.72,
   rayLength: 0.8,
   rayShade: 1,
-  rayShadeColor: "",
   rayMove: 1.8,
   rayColor: "white",
   ...ETCH_LOOK,

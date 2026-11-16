@@ -187,10 +187,10 @@ export default function GlassTool() {
           onFile(e.dataTransfer.files[0]);
         }}
       >
-        {look.cathedral > 0 && look.naveView !== "etched" && <Nave outline={outline} look={look} ink={theme.ink} strength={look.cathedral} top={look.top} size={look.size} walk={look.walk} play={play} />}
-        {look.cathedral > 0 && look.naveView === "etched" && <Etched outline={outline} look={look} ink={theme.ink} strength={look.cathedral} top={look.top} size={look.size} play={play} />}
+        {look.cathedral > 0 && look.naveView !== "etched" && <Nave outline={outline} look={look} ink={picked.nave || theme.ink} strength={look.cathedral} top={look.top} size={look.size} walk={look.walk} play={play} />}
+        {look.cathedral > 0 && look.naveView === "etched" && <Etched outline={outline} look={look} ink={picked.nave || theme.ink} strength={look.cathedral} top={look.top} size={look.size} play={play} />}
         <div className="beam" />
-        {(look.rays > 0 || look.rayShade > 0) && <Rays outline={outline} look={look} ink={picked.ink} top={look.top} size={look.size} dark={dark} />}
+        {(look.rays > 0 || look.rayShade > 0) && <Rays outline={outline} look={look} ink={picked.ink} shade={picked.shade} top={look.top} size={look.size} dark={dark} />}
         <canvas ref={canvas} className="win-canvas" style={place(layers)} />
       </div>
       <div className="panel">
@@ -306,17 +306,6 @@ export default function GlassTool() {
             <>
               {slider("rays", "strength", 0, 1.5, 0.01)}
               {slider("rayShade", "shade the room (so light shows)", 0, 1, 0.01)}
-              <label className="swatch">
-                <span>
-                  shade colour <b>{look.rayShadeColor || (dark ? "black (automatic)" : "line colour (automatic)")}</b>
-                </span>
-                <input type="color" value={look.rayShadeColor || (dark ? "#000000" : theme.ink)} onChange={(e) => set({ rayShadeColor: e.target.value })} />
-              </label>
-              {look.rayShadeColor && (
-                <div className="actions">
-                  <button onClick={() => set({ rayShadeColor: "" })}>back to automatic colour</button>
-                </div>
-              )}
               {slider("rayCount", "how many", 2, 60, 1)}
               {slider("raySpread", "fan out", 0, 1, 0.01)}
               {slider("rayLength", "length", 0.2, 2, 0.01)}

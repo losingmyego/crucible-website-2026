@@ -10,7 +10,6 @@ export type RayLook = {
   raySpread: number; // how widely they fan out
   rayLength: number; // how far they reach, as a share of the screen height
   rayShade: number; // how much the room away from the light is darkened, so the light shows
-  rayShadeColor?: string; // colour of that shade; empty = black on a dark page, the line colour on a light one
   rayMove: number; // how much the shafts drift and breathe
   rayColor: "white" | "warm";
 };
@@ -27,7 +26,7 @@ const rnd = (a: number, b: number) => {
 // of the page's opening (1 is the set pace), undefined shows them at once. The
 // room shades first; the shafts come last, opening out from the middle of the
 // window to the sides while they reach down the floor.
-export default function Rays({ outline, look, ink, top, size, dark, intro }: { outline: Outline | null; look: RayLook; ink: string; top: number; size: number; dark: boolean; intro?: number }) {
+export default function Rays({ outline, look, ink, shade, top, size, dark, intro }: { outline: Outline | null; look: RayLook; ink: string; shade?: string; top: number; size: number; dark: boolean; intro?: number }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const began = useRef(0);
   const pace = useRef(intro);
@@ -41,7 +40,7 @@ export default function Rays({ outline, look, ink, top, size, dark, intro }: { o
     const g = c.getContext("2d")!;
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const light = look.rayColor === "warm" ? "255,214,176" : "255,255,255";
-    const own = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec((look.rayShadeColor || "").trim());
+    const own = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec((shade || "").trim());
     const m = own || /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec(ink.trim());
     const shadeRgb = dark && !own ? "0,0,0" : m ? `${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)}` : "26,26,23";
     let raf = 0;
@@ -126,6 +125,6 @@ export default function Rays({ outline, look, ink, top, size, dark, intro }: { o
     };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [outline, look, ink, top, size, dark]);
+  }, [outline, look, ink, shade, top, size, dark]);
   return <canvas ref={canvas} className="rays-canvas" />;
 }
