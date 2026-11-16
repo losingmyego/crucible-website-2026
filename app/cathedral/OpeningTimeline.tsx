@@ -10,7 +10,7 @@ import { opening, type Part } from "./opening";
 const CLIPS = {
   window: { at: 0.39, duration: 3.58 },
   glass: { at: 2.07, duration: 2.18 },
-  cathedral: { at: 0, duration: 2.9 },
+  cathedral: { at: 0.15, duration: 4.69 },
   scrim: { at: 1.03, duration: 1.7 },
   glow: { at: 3.18, duration: 2.8 },
   text: { at: 2.56, duration: 3.94 },
