@@ -8,6 +8,7 @@ import { isDark, readSaved, useStored, writeSaved } from "../lab";
 import WindowCanvas from "../glass/WindowCanvas";
 import { GLASS_LOOK } from "../glass/look";
 import Nave from "../glass/Nave";
+import Etched from "../glass/Etched";
 import { outlineOf, Outline } from "../glass/nave";
 
 /**
@@ -225,7 +226,8 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
       ref={ref}
       style={{ "--win-top": `${glass.top * 100}vh`, "--win-h": `${glass.size * 100}vh`, "--faint": glass.cathedral, "--light": glass.light, "--walk-by": look.walk, "--o": look.open } as React.CSSProperties}
     >
-      {glass.cathedral > 0 && <Nave outline={outline} look={glass} ink={line} strength={glass.cathedral} top={glass.top} size={glass.size} walk={glass.walk} scroll={glass.walkScroll} play={1} />}
+      {glass.cathedral > 0 && glass.naveView !== "etched" && <Nave outline={outline} look={glass} ink={line} strength={glass.cathedral} top={glass.top} size={glass.size} walk={glass.walk} scroll={glass.walkScroll} play={1} />}
+      {glass.cathedral > 0 && glass.naveView === "etched" && <Etched outline={outline} look={glass} ink={line} strength={glass.cathedral} top={glass.top} size={glass.size} scroll={glass.walkScroll} play={1} />}
       <div className="beam" />
       {(glass.rays > 0 || glass.rayShade > 0) && <Rays outline={outline} look={glass} ink={ink} top={glass.top} size={glass.size} dark={dark} intro={go ? look.open : 0} />}
       {look.scrim > 0 && (

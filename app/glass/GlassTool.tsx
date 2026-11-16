@@ -6,6 +6,7 @@ import { draw, loadWindow, paint, Layers } from "./engine";
 import { rgb, useWindow } from "./useWindow";
 import Rays from "./Rays";
 import Nave from "./Nave";
+import Etched from "./Etched";
 import { outlineOf } from "./nave";
 import { FRAMES, GLASS_KEY, GLASS_LOOK as LOOK, Look, NAVES, place, UPLOAD_KEY } from "./look";
 
@@ -167,7 +168,8 @@ export default function GlassTool() {
           onFile(e.dataTransfer.files[0]);
         }}
       >
-        {look.cathedral > 0 && <Nave outline={outline} look={look} ink={theme.ink} strength={look.cathedral} top={look.top} size={look.size} walk={look.walk} play={play} />}
+        {look.cathedral > 0 && look.naveView !== "etched" && <Nave outline={outline} look={look} ink={theme.ink} strength={look.cathedral} top={look.top} size={look.size} walk={look.walk} play={play} />}
+        {look.cathedral > 0 && look.naveView === "etched" && <Etched outline={outline} look={look} ink={theme.ink} strength={look.cathedral} top={look.top} size={look.size} play={play} />}
         <div className="beam" />
         {(look.rays > 0 || look.rayShade > 0) && <Rays outline={outline} look={look} ink={theme.ink} top={look.top} size={look.size} dark={dark} />}
         <canvas ref={canvas} className="win-canvas" style={place(layers)} />
@@ -310,7 +312,8 @@ export default function GlassTool() {
             "nave",
             "which cathedral",
             <>
-              {(
+              {choice("naveView", [["drawn", "1 drawn"], ["etched", "2 etched"]])}
+              {look.naveView !== "etched" && (
                 <div className="actions pick">
                   {[["first", "first version"], ["machine", "machine"], ["calm", "calm"]].map(([name, label]) => (
                     <button key={name} className={Object.entries(NAVES[name]).every(([k, v]) => look[k as keyof Look] === v) ? "on" : ""} onClick={() => set(NAVES[name])}>
@@ -323,6 +326,27 @@ export default function GlassTool() {
             </>,
             "cathedral",
           )}
+          {look.naveView === "etched" &&
+            section(
+              "etch",
+              "the engraving",
+              <>
+                {slider("etchSize", "picture size", 0.8, 3, 0.01)}
+                {slider("etchClear", "clear room round the window", 0.5, 2.5, 0.01)}
+                {choice("etchInk", [["dark", "ink the shadows"], ["light", "ink the lights"]])}
+                {slider("etchLines", "engraving spacing", 0.8, 12, 0.1)}
+                {slider("etchWeight", "line weight", 0.4, 1.6, 0.01)}
+                {slider("etchAngle", "engraving angle", -90, 90, 1)}
+                {slider("etchBend", "contour flow", 0, 1.6, 0.01)}
+                {slider("etchCross", "shadow crosshatching", 0, 1, 0.01)}
+                {slider("etchDetail", "architectural detail", 0, 2, 0.05)}
+                {slider("etchExposure", "exposure", -2, 2, 0.05)}
+                {slider("etchContrast", "contrast", 0.5, 2, 0.05)}
+                {slider("etchStipple", "fine stippling", 0, 1, 0.01)}
+                {slider("etchWear", "ink wear", 0, 1, 0.01)}
+                {slider("walkScroll", "come closer on scroll (cathedral page)", 0, 2, 0.05)}
+              </>,
+            )}
           {section(
               "space",
               "space and spacing",
