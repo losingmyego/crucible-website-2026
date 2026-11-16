@@ -39,8 +39,8 @@ export type EtchLook = {
 
 export const ETCH_LOOK: EtchLook = {
   naveView: "drawn",
-  etchSize: 1.25,
-  etchY: 0.2,
+  etchSize: 0.7,
+  etchY: 0,
   etchX: 0,
   etchEye: 0.5,
   etchLines: 3.2,
@@ -58,8 +58,11 @@ export const ETCH_LOOK: EtchLook = {
 };
 
 // Where the board sits in the render, as shares of its width and height.
-const BOARD = { cx: 0.501, cy: 0.4955, hw: 0.08, hh: 0.243 };
-const ASPECT = 2944 / 1648;
+const BOARD = { cx: 0.5, cy: 0.5025, hw: 0.052, hh: 0.158 };
+const ASPECT = 2960 / 1648;
+// The picture is a tunnel of frames, one inside the next. Past its edges the
+// same frames are carried on outward, each ring this many times larger.
+const GROW = 2;
 
 const VERT = `#version 300 es
 in vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
@@ -79,6 +82,7 @@ uniform float strength;
 out vec4 outColor;
 
 const float ASPECT = ${ASPECT.toFixed(5)};
+const float GROW = ${GROW.toFixed(1)};
 const vec2 MID = vec2(${BOARD.cx.toFixed(4)}, ${BOARD.cy.toFixed(4)});
 
 float hash(vec2 p) {
@@ -94,22 +98,34 @@ float lineCoverage(float phase, float amount) {
   float resolved = 1.0 - smoothstep(coverage * 0.5 - aa, coverage * 0.5 + aa, d);
   return mix(resolved, coverage, smoothstep(0.45, 1.25, fwidth(phase)));
 }
+// The picture, carried on past its own edges. Outside the picture the same
+// view is read again, larger, about its middle: the next ring of frames. Each
+// ring is blended into the one before it over a narrow band.
+float pic(sampler2D s, vec2 uv) {
+  vec2 d = uv - 0.5;
+  float m = max(abs(d.x), abs(d.y)) * 2.0;
+  if (m <= 0.88) return texture(s, uv).r;
+  float n = clamp(ceil(log(m) / log(GROW) - 0.0001), 0.0, 3.0);
+  float k = pow(GROW, n);
+  float a = texture(s, 0.5 + d / k).r;
+  float b = texture(s, 0.5 + d / (k * GROW)).r;
+  return mix(a, b, smoothstep(0.88, 1.0, m / k));
+}
 void main() {
   vec2 q = vec2(gl_FragCoord.x, res.y - gl_FragCoord.y);
   // Eye level: below the picture's horizon the floor is given more room, above it the roof less (or the reverse).
   vec2 off = q - centre;
   off.y /= off.y > 0.0 ? eye : 1.0 / eye;
   vec2 uv = MID + off / vec2(tall * ASPECT, tall);
-  if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { outColor = vec4(0.0); return; }
-  float original = texture(img, uv).r;
-  float mean = texture(field, uv).r;
+  float original = pic(img, uv);
+  float mean = pic(field, uv);
   if (inkLight > 0.5) { original = 1.0 - original; mean = 1.0 - mean; }
   float detailed = clamp(original + (original - mean) * detail, 0.0, 1.0);
   float lum = pow(clamp(detailed * exp2(exposure), 0.0, 1.0), 0.85);
   lum = clamp((lum - 0.5) * contrast + 0.5, 0.0, 1.0);
   float darkness = clamp(1.0 - lum, 0.0, 1.0);
   vec2 e = vec2(2.0 / (1000.0 * ASPECT), 2.0 / 1000.0);
-  float gx = texture(field, uv + vec2(e.x, 0.0)).r - texture(field, uv - vec2(e.x, 0.0)).r;
+  float gx = pic(field, uv + vec2(e.x, 0.0)) - pic(field, uv - vec2(e.x, 0.0));
   // The pattern is measured in CSS pixels on the screen, so it stays as fine on any display.
   vec2 pt = (q - centre) / px;
   float c = cos(angle), sn = sin(angle);
@@ -133,9 +149,9 @@ void main() {
   // And leave the window itself clear, where it stands above the board.
   vec2 wb = abs(q - win.xy) / (win.zw * clear);
   room = min(room, smoothstep(1.0, 1.45, max(wb.x, wb.y)));
-  // Fade at the very edge of the picture.
-  vec2 m = min(uv, 1.0 - uv);
-  float fade = smoothstep(0.0, 0.05, min(m.x, m.y));
+  // The rings stop after three; fade out before the last one ends.
+  vec2 far = abs(uv - 0.5) * 2.0;
+  float fade = 1.0 - smoothstep(GROW * GROW * GROW * 0.8, GROW * GROW * GROW, max(far.x, far.y));
   float alpha = engraving * room * fade * strength;
   outColor = vec4(ink * alpha, alpha);
 }`;
