@@ -6,16 +6,16 @@ import "dialkit/styles.css";
 import { opening, type Part } from "./opening";
 
 // When each part of the opening arrives and how long it takes, in seconds.
-// These are the starting values; the dock at the bottom of the page moves them.
+// These are Neesh's timings of 2026-11-16; the dock at the bottom of the page moves them.
 const CLIPS = {
-  window: { at: 0.18, duration: 2.64 },
-  glass: { at: 1.8, duration: 1 },
+  window: { at: 0.39, duration: 2.89 },
+  glass: { at: 2.07, duration: 2.18 },
   cathedral: { at: 0, duration: 2.9 },
   scrim: { at: 0.24, duration: 1.7 },
-  glow: { at: 1.1, duration: 1.9 },
-  text: { at: 0.45, duration: 2.9 },
-  shade: { at: 0.24, duration: 2.2 },
-  rays: { at: 2.7, duration: 3.8 },
+  glow: { at: 3.18, duration: 1.9 },
+  text: { at: 1.63, duration: 4.87 },
+  shade: { at: 0.02, duration: 1.64 },
+  rays: { at: 1.65, duration: 3.8 },
 } satisfies TimelineConfig;
 
 const PARTS = Object.keys(CLIPS) as Part[];
@@ -23,6 +23,9 @@ const PARTS = Object.keys(CLIPS) as Part[];
 // Runs the opening from a DialKit timeline. `go` starts it. The dock shows
 // whenever the settings panel is open.
 export default function OpeningTimeline({ go }: { go: boolean }) {
+  // TODO(production): DialKit's clip.current values are the scrubbable authoring preview.
+  // Replace them with equivalent real Motion animations using the tuned timeline
+  // timings and transitions, then remove useDialTimeline and <DialTimeline />.
   const timeline = useDialTimeline("Opening", CLIPS, { id: "crucible-opening", persist: true, autoplay: false });
   const [panel, setPanel] = useState(false);
 
