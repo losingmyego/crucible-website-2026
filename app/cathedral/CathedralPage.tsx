@@ -217,7 +217,7 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
   // dust is told to measure where the words ended up.
   useEffect(() => {
     if (!go) return;
-    const done = setTimeout(() => window.dispatchEvent(new Event("resize")), look.open * 4200);
+    const done = setTimeout(() => window.dispatchEvent(new Event("resize")), look.open * 2400);
     return () => clearTimeout(done);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [go]);
