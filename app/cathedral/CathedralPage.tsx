@@ -39,6 +39,7 @@ type Look = {
   navSize: number; // the header links, in px
   headSize: number; // section headers in the text, in px
   labelTrack: number; // letter spacing of both, in px
+  tilt?: number; // perspective on the text: how much larger it is at the bottom of the screen, in percent
   textTrack: number; // letter spacing, in hundredths of the text size (0 = as the face is drawn)
   open: number; // length of the opening: 1 is the set pace, 2 twice as long
   scrim: number; // strength of the shade rising from the bottom of the screen, behind the text
@@ -53,7 +54,7 @@ type Look = {
 };
 
 // Neesh's settings as of 2026-11-16.
-const LOOK: Look = { walk: 0.5, font: "asta", textWeight: 350, brandWeight: 400, align: "left", wrap: "tidy", open: 1.2, textSize: 15, textLine: 1.6, textGap: 1.8, textTrack: 0, navSize: 12, headSize: 13, labelTrack: 0.5, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page", scrimColor: "#2a1c15", scrimShape: "linear", scrimSolid: 0.25, scrimEnd: 1, scrimWide: 1.2 };
+const LOOK: Look = { walk: 0.5, font: "asta", textWeight: 350, brandWeight: 400, align: "left", wrap: "tidy", open: 1.2, textSize: 15, textLine: 1.6, textGap: 1.8, textTrack: 0, navSize: 12, headSize: 13, labelTrack: 0.5, tilt: 4, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page", scrimColor: "#2a1c15", scrimShape: "linear", scrimSolid: 0.25, scrimEnd: 1, scrimWide: 1.2 };
 const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const SEMPLICITA = '"Semplicita Pro", "Helvetica Neue", Arial, sans-serif'; // the brand face, served from public/fonts
 const ASTA = '"Asta Sans Variable", "Helvetica Neue", Arial, sans-serif';
@@ -325,6 +326,7 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
     root.style.setProperty("--nav-size", `${look.navSize}px`);
     root.style.setProperty("--head-size", `${look.headSize}px`);
     root.style.setProperty("--label-track", `${look.labelTrack}px`);
+    root.style.setProperty("--text-tilt", String(look.tilt ?? LOOK.tilt));
     // The dust measures where the words sit, so tell it they have moved.
     const moved = setTimeout(() => window.dispatchEvent(new Event("resize")), 60);
     // A served face can arrive a moment later and shift the lines.
@@ -332,16 +334,16 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
     root.style.setProperty("--text-width", `${look.textWidth}px`);
     return () => {
       clearTimeout(moved);
-      for (const k of ["--text-wrap", "--text-last", "--text-font", "--text-size", "--text-weight", "--text-line", "--text-gap", "--text-track", "--text-width", "--text-align", "--text-hyphens", "--text-word", "--text-space", "--o"]) root.style.removeProperty(k);
+      for (const k of ["--text-wrap", "--text-last", "--text-font", "--text-size", "--text-weight", "--text-line", "--text-gap", "--text-track", "--text-width", "--text-align", "--text-hyphens", "--text-word", "--text-space", "--text-tilt", "--o"]) root.style.removeProperty(k);
     };
-  }, [look.wrap, look.font, look.textWeight, look.brandWeight, look.align, look.textSize, look.textLine, look.textGap, look.textTrack, look.navSize, look.headSize, look.labelTrack, look.textWidth]);
+  }, [look.wrap, look.font, look.textWeight, look.brandWeight, look.align, look.textSize, look.textLine, look.textGap, look.textTrack, look.navSize, look.headSize, look.labelTrack, look.tilt, look.textWidth]);
 
   const slider = (key: keyof Look, label: string, min: number, max: number, step: number) => (
     <label>
       <span>
-        {label} <b>{Number(look[key]).toFixed(2)}</b>
+        {label} <b>{Number(look[key] ?? LOOK[key]).toFixed(2)}</b>
       </span>
-      <input type="range" min={min} max={max} step={step} value={Number(look[key])} onChange={(e) => set({ [key]: Number(e.target.value) })} />
+      <input type="range" min={min} max={max} step={step} value={Number(look[key] ?? LOOK[key])} onChange={(e) => set({ [key]: Number(e.target.value) })} />
     </label>
   );
   const extra = (
@@ -370,6 +372,7 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
         {slider("textTrack", "letter spacing", -5, 20, 0.1)}
         {slider("textGap", "space between paragraphs", 0, 5, 0.05)}
         {slider("textWidth", "column width (px)", 280, 900, 10)}
+        {slider("tilt", "perspective: larger at the bottom (%)", 0, 30, 0.5)}
           <div className="actions">
             {([["left", "left"], ["center", "centred"], ["justified", "justified"]] as const).map(([v, name]) => (
               <button key={v} className={look.align === v ? "on" : ""} onClick={() => set({ align: v })}>

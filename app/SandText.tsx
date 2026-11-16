@@ -125,9 +125,13 @@ type Word = {
 
 type Glyphs = { xs: Float32Array; ys: Float32Array; n: number };
 
+// How far the eye is from the page, in pixels, when the text is set in perspective.
+const DEPTH = 1200;
+
 export default function SandText({ paragraphs, variant }: { paragraphs: string[]; variant?: Variant }) {
   const BASE: Settings = { ...DEFAULTS, ...variant?.defaults };
   const columnRef = useRef<HTMLDivElement>(null);
+  const tiltRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [kit, setKit] = useState<{ token: string; value: string }[]>([]);
   useEffect(() => {
@@ -156,7 +160,11 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
     const size = () => {
       const gap = 28 + settings.soft;
       // Everything from the top of the closing paragraph down to the end of the column's contents.
+      const tilt = tiltRef.current;
+      const was = tilt?.style.transform ?? "";
+      if (tilt) tilt.style.transform = "none"; // measure the text flat
       const tail = (column.lastElementChild as HTMLElement).getBoundingClientRect().bottom - last.getBoundingClientRect().top;
+      if (tilt) tilt.style.transform = was;
       setEndPad(Math.max(24, Math.round(window.innerHeight * (1 - settings.line) - gap - tail)));
     };
     size();
@@ -230,7 +238,23 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
       return face;
     };
 
+    // The text can be set in perspective (see the frame loop). Everything is
+    // measured with the text flat; at the sand line the two agree.
+    const tilt = tiltRef.current;
+    let tiltTop = 0; // top of the text, document coordinates
     const measure = () => {
+      const tilted = tilt?.style.transform ?? "";
+      if (tilt) {
+        tilt.style.transform = "none";
+        tiltTop = tilt.getBoundingClientRect().top + window.scrollY;
+      }
+      try {
+        measureFlat();
+      } finally {
+        if (tilt) tilt.style.transform = tilted;
+      }
+    };
+    const measureFlat = () => {
       faces.clear();
       const cs = getComputedStyle(column);
       bodyTrack = cs.letterSpacing === "normal" ? "0px" : cs.letterSpacing;
@@ -435,6 +459,19 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
 
       // Which words have crossed the line?
       const lineY = sy + vh * s.line;
+
+      // Perspective: the text leans back about the sand line, so it is its
+      // true size where it turns to sand and a little larger toward the
+      // bottom of the screen. The setting is how much larger it is there.
+      if (tilt) {
+        const more = (parseFloat(document.documentElement.style.getPropertyValue("--text-tilt")) || 0) / 100;
+        const below = Math.max(80, vh * (1 - s.line));
+        if (more > 0) {
+          const lean = Math.atan((DEPTH * more) / ((1 + more) * below));
+          tilt.style.transformOrigin = `50% ${(lineY - tiltTop).toFixed(1)}px`;
+          tilt.style.transform = `perspective(${DEPTH}px) rotateX(${lean.toFixed(5)}rad) scaleY(${(1 / Math.cos(lean)).toFixed(5)})`; // the stretch keeps line spacing from closing up as the text leans
+        } else if (tilt.style.transform) tilt.style.transform = "";
+      }
       const speed = dt > 0 ? scrolled / dt : 0; // page speed, pixels per second
       for (let i = 0; i < words.length; i++) {
         const word = words[i];
@@ -748,6 +785,7 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
   return (
     <>
       {variant?.backdrop}
+      <div className="tilt" ref={tiltRef}>
       <div className="column" ref={columnRef} style={{ paddingTop: `${settings.start * 100}vh`, paddingBottom: endPad === null ? undefined : endPad }}>
         {paragraphs.map((p, i) => (
           <p key={i} className={heads[i] ? "head" : undefined}>
@@ -765,6 +803,7 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
             <span className="end-mark" role="img" aria-label="Crucible" />
           </div>
         )}
+      </div>
       </div>
       <div className="sand-layer" aria-hidden>
         <canvas className="sand" ref={canvasRef} />
