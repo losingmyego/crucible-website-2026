@@ -2,6 +2,35 @@
 @import "./tokens.css";
 
 /* JetBrains Mono, copied unchanged from the kit's assets/fonts. */
+/* Semplicita, the brand face, from the Brand 2.0 fonts folder. */
+@font-face {
+  font-family: "Semplicita Pro";
+  src: url("/fonts/semplicita-light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Semplicita Pro";
+  src: url("/fonts/semplicita-pro-regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Semplicita Pro";
+  src: url("/fonts/semplicita-medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Semplicita Pro";
+  src: url("/fonts/semplicita-bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 @font-face {
   font-family: "JetBrains Mono";
   src: url("/fonts/JetBrainsMono-Regular.woff2") format("woff2");
@@ -943,10 +972,12 @@ html:has(.soon) .panel-toggle {
    held still and placed by the playhead, --t. Each part's start and length come
    from the timeline as --<part>-at and --<part>-for, so the page shows the same
    moment whether it is playing, paused or being dragged. */
+/* The cathedral is sketched in by its own drawing code, nearest part first,
+   so the wipe and the blur are not used here. */
 html[data-timeline] .cathedral.opening .nave-rise {
-  animation:
-    wipe-up calc(var(--cathedral-for) * 0.8) var(--ease-soft) calc(var(--cathedral-at) - var(--t)) both paused,
-    settle var(--cathedral-for) var(--ease-out) calc(var(--cathedral-at) - var(--t)) both paused;
+  animation: none;
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 html[data-timeline] .cathedral.opening .scrim {
   animation: cathedral-in var(--scrim-for) var(--ease-out) calc(var(--scrim-at) - var(--t)) both paused;

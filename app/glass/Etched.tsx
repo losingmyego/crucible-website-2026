@@ -1,5 +1,6 @@
 "use client";
 
+import { opening, through } from "../cathedral/opening";
 import { useEffect, useRef } from "react";
 import { Outline } from "./nave";
 
@@ -79,6 +80,7 @@ uniform float px;      // device pixels per CSS pixel
 uniform float lines, weight, bend, cross_, detail, exposure, contrast, angle, stipple, wear, inkLight, clear;
 uniform vec3 ink;
 uniform float strength;
+uniform float draw;     // how much of the picture has been sketched in, 0 to 1
 out vec4 outColor;
 
 const float ASPECT = ${ASPECT.toFixed(5)};
@@ -152,7 +154,12 @@ void main() {
   // The rings stop after three; fade out before the last one ends.
   vec2 far = abs(uv - 0.5) * 2.0;
   float fade = 1.0 - smoothstep(GROW * GROW * GROW * 0.8, GROW * GROW * GROW, max(far.x, far.y));
-  float alpha = engraving * room * fade * strength;
+  // The sketch-in: the picture is drawn from the edges of the screen, nearest
+  // you, in toward the window. Each engraved line reaches in by its own amount.
+  float reach = pow(clamp(length(q - win.xy) / (0.5 * length(res)), 0.0, 1.0), 0.6);
+  float edge = 1.15 - draw * 1.45;
+  float sketched = smoothstep(edge, edge + 0.03, reach + (hash(vec2(floor(phase), 7.0)) - 0.5) * 0.25);
+  float alpha = engraving * room * fade * strength * sketched;
   outColor = vec4(ink * alpha, alpha);
 }`;
 
@@ -234,7 +241,8 @@ export default function Etched({ outline, look, ink, strength, top, size, scroll
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       const W = Math.round(window.innerWidth * dpr);
       const H = Math.round(window.innerHeight * dpr);
-      const key = `${W}:${H}:${stamp}`;
+      const drawn = opening.on ? through("cathedral") : 1;
+      const key = `${W}:${H}:${stamp}:${drawn.toFixed(4)}`;
       if (key === last) return;
       last = key;
       if (c.width !== W || c.height !== H) {
@@ -272,6 +280,7 @@ export default function Etched({ outline, look, ink, strength, top, size, scroll
       gl.uniform1f(U("inkLight"), look.etchInk === "light" ? 1 : 0);
       gl.uniform1f(U("clear"), look.etchClear);
       gl.uniform3f(U("ink"), ...rgbOf(ink));
+      gl.uniform1f(U("draw"), drawn);
       gl.uniform1f(U("strength"), Math.min(1, strength * 1.5));
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     };
