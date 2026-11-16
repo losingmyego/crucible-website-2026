@@ -64,6 +64,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Holds the text so it can be set in perspective. */
+.tilt {
+  position: relative;
+  z-index: 1;
+}
+
 .column {
   font-family: var(--text-font, inherit);
   font-size: var(--text-size, inherit);

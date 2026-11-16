@@ -93,6 +93,16 @@ function install(n: number) {
   }
 }
 
+// Sent in this tab when another tab has changed a saved setting; detail is its key.
+export const SYNC = "crucible-site:sync";
+export function onSync(keys: string[], then: () => void) {
+  const hear = (e: Event) => {
+    if (keys.includes((e as CustomEvent<string>).detail)) then();
+  };
+  window.addEventListener(SYNC, hear);
+  return () => window.removeEventListener(SYNC, hear);
+}
+
 function boot() {
   if (booted || typeof window === "undefined") return;
   booted = true;
@@ -110,6 +120,18 @@ function boot() {
       } catch {}
     }
   }
+  // Settings changed in another tab of this browser arrive here too, so the
+  // homepage and the window tool can sit side by side and stay in step.
+  window.addEventListener("storage", (e) => {
+    if (!e.key || !e.key.startsWith(PREFIX)) return;
+    try {
+      if (e.newValue === null) delete MEM[e.key];
+      else MEM[e.key] = JSON.parse(e.newValue);
+    } catch {
+      return;
+    }
+    window.dispatchEvent(new CustomEvent(SYNC, { detail: e.key }));
+  });
   // A visitor with nothing saved starts on Option 1. On the live site the built-in
   // options always win: settings a browser kept from an earlier version are replaced.
   if (OPTIONS.length > 0) {
@@ -169,12 +191,16 @@ export function useThemeColors<C extends Record<string, string>>(
   const [colors, setColorsState] = useState<C>(base[fallback]);
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
-    const slots = readSaved<Slots<C>>(key) || {};
-    let name = readSaved<{ name?: ThemeName }>(THEME_KEY)?.name;
-    if (!name || !base[name]) name = fallback;
-    setTheme(name);
-    setColorsState({ ...base[name], ...slots[name] });
-    setLoaded(true);
+    const load = () => {
+      const slots = readSaved<Slots<C>>(key) || {};
+      let name = readSaved<{ name?: ThemeName }>(THEME_KEY)?.name;
+      if (!name || !base[name]) name = fallback;
+      setTheme(name);
+      setColorsState({ ...base[name], ...slots[name] });
+      setLoaded(true);
+    };
+    load();
+    return onSync([key, THEME_KEY], load);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const setColors = (next: C) => {
@@ -264,13 +290,18 @@ export function useStored<T extends object>(key: string, defaults: T) {
   const [value, setValue] = useState<T>(defaults);
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
-    const saved = readSaved<Partial<T>>(key);
-    if (saved) setValue({ ...defaults, ...saved });
-    setLoaded(true);
+    const load = () => {
+      const saved = readSaved<Partial<T>>(key);
+      if (saved) setValue({ ...defaults, ...saved });
+      setLoaded(true);
+    };
+    load();
+    return onSync([key], load);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
   useEffect(() => {
-    if (loaded) writeSaved(key, value);
+    // Nothing to write when this is what is already saved (for example, just received from another tab).
+    if (loaded && JSON.stringify(readSaved(key)) !== JSON.stringify(value)) writeSaved(key, value);
   }, [loaded, key, value]);
   return [value, setValue, loaded] as const;
 }
