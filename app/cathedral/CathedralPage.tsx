@@ -32,12 +32,17 @@ type Look = {
   open: number; // length of the opening: 1 is the set pace, 2 twice as long
   scrim: number; // strength of the shade rising from the bottom of the screen, behind the text
   scrimHeight: number; // how far up the screen it reaches
-  scrimTone: "page" | "dark"; // the page colour, or black
+  scrimTone: "page" | "dark" | "custom"; // the page colour, black, or a colour of its own
+  scrimColor: string; // the colour used when the tone is custom
+  scrimShape: "linear" | "radial"; // a band rising from the bottom, or a half circle sitting on the bottom edge
+  scrimSolid: number; // gradient stop: how far the full colour holds, 0 to 1
+  scrimEnd: number; // gradient stop: where it has faded to nothing, 0 to 1
+  scrimWide: number; // half circle only: its width, in screen widths
   textWidth: number; // width of the column of text, in pixels
 };
 
 // Neesh's settings as of 2026-11-16.
-const LOOK: Look = { walk: 0.5, font: "times", align: "left", wrap: "tidy", open: 1.2, textSize: 15, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page" };
+const LOOK: Look = { walk: 0.5, font: "times", align: "left", wrap: "tidy", open: 1.2, textSize: 15, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page", scrimColor: "#2a1c15", scrimShape: "linear", scrimSolid: 0.25, scrimEnd: 1, scrimWide: 1.2 };
 const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const TIMES = '"Times New Roman", Times, serif';
 
@@ -237,13 +242,23 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
           style={{
             height: `${look.scrimHeight * 100}vh`,
             opacity: look.scrim,
-            background: `linear-gradient(to top, ${look.scrimTone === "dark" ? "#000" : paper} 0%, ${look.scrimTone === "dark" ? "#000" : paper} 25%, transparent 100%)`,
+            background: scrimPaint(look, paper),
           }}
         />
       )}
       <WindowCanvas ink={line} paper={paper} className="win-canvas" play={1} seconds={2.2 * look.open} onLook={setGlass} onLayers={(L) => setOutline(outlineOf(L))} />
     </div>
   );
+}
+
+// The scrim's gradient. Linear: a band rising from the bottom edge. Radial: a
+// half circle sitting on the bottom edge, like a sun going down.
+function scrimPaint(look: Look, paper: string) {
+  const c = look.scrimTone === "dark" ? "#000" : look.scrimTone === "custom" ? look.scrimColor : paper;
+  const a = Math.min(look.scrimSolid, look.scrimEnd) * 100;
+  const b = Math.max(look.scrimSolid, look.scrimEnd) * 100;
+  const stops = `${c} 0%, ${c} ${a}%, color-mix(in srgb, ${c} 0%, transparent) ${b}%`;
+  return look.scrimShape === "radial" ? `radial-gradient(ellipse ${look.scrimWide * 50}vw 100% at 50% 100%, ${stops})` : `linear-gradient(to top, ${stops})`;
 }
 
 export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) {
@@ -303,12 +318,30 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
       {slider("scrim", "scrim behind the text (0 = off)", 0, 1, 0.01)}
       {slider("scrimHeight", "scrim height", 0.1, 1, 0.01)}
       <div className="actions">
-        {(["page", "dark"] as const).map((f) => (
+        {(["page", "dark", "custom"] as const).map((f) => (
           <button key={f} className={look.scrimTone === f ? "on" : ""} onClick={() => set({ scrimTone: f })}>
-            {f === "page" ? "scrim: page colour" : "scrim: darker"}
+            {f === "page" ? "page colour" : f === "dark" ? "black" : "own colour"}
           </button>
         ))}
       </div>
+      {look.scrimTone === "custom" && (
+        <label className="swatch">
+          <span>
+            scrim colour <b>{look.scrimColor}</b>
+          </span>
+          <input type="color" value={look.scrimColor} onChange={(e) => set({ scrimColor: e.target.value })} />
+        </label>
+      )}
+      <div className="actions">
+        {(["linear", "radial"] as const).map((f) => (
+          <button key={f} className={look.scrimShape === f ? "on" : ""} onClick={() => set({ scrimShape: f })}>
+            {f === "linear" ? "linear" : "radial (half circle)"}
+          </button>
+        ))}
+      </div>
+      {slider("scrimSolid", "gradient stop: full colour until", 0, 1, 0.01)}
+      {slider("scrimEnd", "gradient stop: faded out by", 0, 1, 0.01)}
+      {look.scrimShape === "radial" && slider("scrimWide", "half circle width", 0.3, 3, 0.01)}
       {slider("textSize", "text size (px)", 10, 28, 0.5)}
       {slider("textWidth", "text column width (px)", 280, 900, 10)}
       <div className="actions">
