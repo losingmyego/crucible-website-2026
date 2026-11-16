@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Fold, SAND_FAR, SAVED_NOTE, ShareButton, THEMES, ThemeButtons, Versions, readSaved, useThemeColors, writeSaved, type ThemeName } from "./lab";
+import { Fold, isDark, SAND_FAR, SAVED_NOTE, ShareButton, THEMES, Versions, readSaved, useThemeColors, writeSaved, type ThemeName } from "./lab";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 
@@ -61,17 +61,19 @@ export type Settings = {
 // starts at the text colour and ends at the last stop. Add stops in between
 // to run the sand through a whole palette.
 // `line` is the colour of the drawn lines (the window and the cathedral) on the cathedral page.
-type Colors = { paper: string; ink: string; far: string; line: string };
+// `line` is the window's lines. `nave` is the cathedral's lines and `shade` the darkening toward the
+// edges of the screen; `rays` is the shafts of light. Left empty, rays follow the white / warm choice in the window tool, nave follows the window lines and shade is black on a dark page, the text colour on a light one.
+type Colors = { paper: string; ink: string; far: string; line: string; nave: string; shade: string; rays: string };
 // `paper` and `ink` are Neesh's working picks and are not in the brand kit yet.
 // `far` is the kit's lightest neutral, --color-neutral-00.
-const COLOR_DEFAULTS: Colors = { paper: "#6e6a66", ink: "#f6f6f4", far: "#e8e8e3", line: "#cecec0" };
+const COLOR_DEFAULTS: Colors = { paper: "#6e6a66", ink: "#f6f6f4", far: "#e8e8e3", line: "#cecec0", nave: "", shade: "", rays: "" };
 // Starting colours for each theme: Neesh's picks on the hero as of 2026-11-16.
 // The dust fades toward `far`. `line` colours the window and the cathedral.
 export const BASE_COLORS: Record<ThemeName, Colors> = {
-  light: { paper: THEMES.light.paper, ink: THEMES.light.ink, far: "#e8e8e3", line: THEMES.light.ink },
+  light: { paper: THEMES.light.paper, ink: THEMES.light.ink, far: "#e8e8e3", line: THEMES.light.ink, nave: "", shade: "", rays: "" },
   medium: COLOR_DEFAULTS,
-  dark: { paper: THEMES.dark.paper, ink: "#a6a299", far: "#1a1a17", line: "#a6a299" },
-  custom: { paper: THEMES.custom.paper, ink: THEMES.custom.ink, far: SAND_FAR, line: THEMES.custom.ink },
+  dark: { paper: THEMES.dark.paper, ink: "#a6a299", far: "#1a1a17", line: "#a6a299", nave: "", shade: "", rays: "" },
+  custom: { paper: THEMES.custom.paper, ink: THEMES.custom.ink, far: SAND_FAR, line: THEMES.custom.ink, nave: "", shade: "", rays: "" },
 };
 // The kit's neutrals, read from app/tokens.css when the page loads.
 const KIT_TOKENS = ["--color-neutral-00", "--color-cream", "--color-taupe", "--color-smoke"];
@@ -708,6 +710,9 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
     root.setProperty("--ink", colors.ink);
     root.setProperty("--far", colors.far);
     root.setProperty("--line", colors.line || colors.ink);
+    root.setProperty("--nave", colors.nave || colors.line || colors.ink);
+    root.setProperty("--shade", colors.shade || "");
+    root.setProperty("--rays", colors.rays || "");
   }, [colors]);
   useEffect(() => {
     document.documentElement.style.setProperty("--back", `${settings.back}s`);
@@ -725,14 +730,15 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
     return () => lenis.destroy();
   }, [settings.weight, settings.speed]);
 
-  const swatch = (key: keyof Colors, label: string) => (
+  // `auto` is what a colour falls back to while it has not been picked.
+  const swatch = (key: keyof Colors, label: string, auto?: string) => (
     <label className="swatch">
       <span>
-        {label} <b>{colors[key]}</b>
+        {label} <b>{colors[key] || "automatic"}</b>
       </span>
       <input
         type="color"
-        value={colors[key]}
+        value={colors[key] || auto || "#000000"}
         onChange={(e) => setColors({ ...colors, [key]: e.target.value })}
       />
       <span className="chips">
@@ -832,10 +838,12 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
           {variant?.scroll}
         </Fold>
         <Fold id="colour" title="colour" open>
-          <ThemeButtons current={themed.theme} onPick={themed.pick} />
           {swatch("paper", "background")}
           {swatch("ink", "text")}
-          {variant && swatch("line", "lines (window and cathedral)")}
+          {variant && swatch("line", "window lines")}
+          {variant && swatch("nave", "cathedral lines", colors.line || colors.ink)}
+          {variant && swatch("shade", "outer shade", isDark(colors.paper) ? "#000000" : colors.ink)}
+          {variant && swatch("rays", "light rays", "#ffffff")}
           {swatch("far", "sand fades to")}
         </Fold>
         <Fold id="save" title="save and share">

@@ -1091,6 +1091,10 @@ html[data-timeline][data-panel] .panel {
 .options button[aria-pressed="true"] {
   border-color: color-mix(in srgb, var(--ink) 55%, transparent);
 }
+.options button.more {
+  min-width: 22px;
+  opacity: 0.45;
+}
 html[data-gate] .options {
   display: none;
 }

@@ -176,6 +176,9 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
   const [ink, setInk] = useState("#1a1a17");
   const [paper, setPaper] = useState("#e8e8e3");
   const [line, setLine] = useState("#1a1a17");
+  const [nave, setNave] = useState("#1a1a17"); // the cathedral's lines
+  const [rays, setRays] = useState(""); // the shafts of light; empty = automatic
+  const [shade, setShade] = useState(""); // the darkening toward the edges; empty = automatic
   // The page colours are set on the document by the sand text; follow them.
   useEffect(() => {
     const read = () => {
@@ -183,7 +186,11 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
       setDark(isDark(cs.getPropertyValue("--paper").trim() || "#e8e8e3"));
       setPaper(cs.getPropertyValue("--paper").trim() || "#e8e8e3");
       setInk(cs.getPropertyValue("--ink").trim() || "#1a1a17");
-      setLine(cs.getPropertyValue("--line").trim() || cs.getPropertyValue("--ink").trim() || "#1a1a17");
+      const lines = cs.getPropertyValue("--line").trim() || cs.getPropertyValue("--ink").trim() || "#1a1a17";
+      setLine(lines);
+      setNave(cs.getPropertyValue("--nave").trim() || lines);
+      setShade(cs.getPropertyValue("--shade").trim());
+      setRays(cs.getPropertyValue("--rays").trim());
     };
     read();
     const watch = new MutationObserver(read);
@@ -240,10 +247,10 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
       style={{ "--win-top": `${glass.top * 100}vh`, "--win-h": `${glass.size * 100}vh`, "--faint": glass.cathedral, "--light": glass.light, "--walk-by": look.walk } as React.CSSProperties}
     >
       <OpeningTimeline go={go} />
-      {glass.cathedral > 0 && glass.naveView !== "etched" && <Nave outline={outline} look={glass} ink={line} strength={glass.cathedral} top={glass.top} size={glass.size} walk={glass.walk} scroll={glass.walkScroll} play={1} />}
-      {glass.cathedral > 0 && glass.naveView === "etched" && <Etched outline={outline} look={glass} ink={line} strength={glass.cathedral} top={glass.top} size={glass.size} scroll={glass.walkScroll} play={1} />}
+      {glass.cathedral > 0 && glass.naveView !== "etched" && <Nave outline={outline} look={glass} ink={nave} strength={glass.cathedral} top={glass.top} size={glass.size} walk={glass.walk} scroll={glass.walkScroll} play={1} />}
+      {glass.cathedral > 0 && glass.naveView === "etched" && <Etched outline={outline} look={glass} ink={nave} strength={glass.cathedral} top={glass.top} size={glass.size} scroll={glass.walkScroll} play={1} />}
       <div className="beam" />
-      {(glass.rays > 0 || glass.rayShade > 0) && <Rays outline={outline} look={glass} ink={ink} top={glass.top} size={glass.size} dark={dark} intro={go ? 1 : 0} />}
+      {(glass.rays > 0 || glass.rayShade > 0) && <Rays outline={outline} look={glass} ink={ink} shade={shade} light={rays} top={glass.top} size={glass.size} dark={dark} intro={go ? 1 : 0} />}
       {look.scrim > 0 && (
         <div
           className="scrim"
