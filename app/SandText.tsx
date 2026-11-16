@@ -106,7 +106,10 @@ type Part = {
   y: number;
   w: number;
   h: number;
+  face?: Face; // set when the word is in a different type from the body, such as a header
 };
+// A typeface as the drawing surface needs it.
+type Face = { font: string; track: string; ascent: number };
 
 // Something that turns to sand as a unit. Usually one part; a word that was
 // hyphenated across two lines has two.
@@ -183,12 +186,30 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
 
     let font = "";
     let ascent = 0;
+    let bodyTrack = "0px";
     const glyphCache = new Map<string, Glyphs>();
     const sampler = document.createElement("canvas");
     const sctx = sampler.getContext("2d", { willReadFrequently: true })!;
 
+    // Headers are set in their own type, so their sand is cut from that type too.
+    const faces = new Map<Element, Face | undefined>();
+    const faceOf = (el: HTMLElement): Face | undefined => {
+      const p = el.closest("p");
+      if (!p || !p.classList.contains("head")) return undefined;
+      if (faces.has(p)) return faces.get(p);
+      const cs = getComputedStyle(p);
+      const f = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      const track = cs.letterSpacing === "normal" ? "0px" : cs.letterSpacing;
+      sctx.font = f;
+      const face = { font: f, track, ascent: sctx.measureText("Hg").fontBoundingBoxAscent };
+      faces.set(p, face);
+      return face;
+    };
+
     const measure = () => {
+      faces.clear();
       const cs = getComputedStyle(column);
+      bodyTrack = cs.letterSpacing === "normal" ? "0px" : cs.letterSpacing;
       const nextFont = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
       if (nextFont !== font) glyphCache.clear();
       font = nextFont;
@@ -223,7 +244,8 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
         } else rects = Array.from(el.getClientRects()).filter((r) => r.width > 0);
         // While the opening is still moving the column or this word, measure where it will come to rest.
         const dy = lift + shiftOf(el);
-        const box = (r: DOMRect, t: string): Part => ({ text: t, img, x: r.left + sx, y: r.top + sy - dy, w: r.width, h: r.height });
+        const face = img ? undefined : faceOf(el);
+        const box = (r: DOMRect, t: string): Part => ({ text: t, img, x: r.left + sx, y: r.top + sy - dy, w: r.width, h: r.height, face });
         let parts: Part[];
         if (rects.length === 2 && node && node.nodeType === Node.TEXT_NODE) {
           // Hyphenated across two lines: find the letter where line two begins.
@@ -255,7 +277,7 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
 
     // Draw a word off screen and return where its ink is, one entry per grain.
     const sample = (word: Part, grain: number): Glyphs => {
-      const key = word.img ? `${grain}|img|${word.img.src}|${Math.round(word.w)}x${Math.round(word.h)}` : `${grain}|${word.text}`;
+      const key = word.img ? `${grain}|img|${word.img.src}|${Math.round(word.w)}x${Math.round(word.h)}` : `${grain}|${word.face?.font ?? ""}|${word.text}`;
       const hit = glyphCache.get(key);
       if (hit) return hit;
       if (word.img && !(word.img.complete && word.img.naturalWidth > 0)) return { xs: new Float32Array(0), ys: new Float32Array(0), n: 0 };
@@ -265,11 +287,12 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
       sampler.width = cw;
       sampler.height = ch;
       sctx.setTransform(scale, 0, 0, scale, 0, 0);
-      sctx.font = font;
+      sctx.font = word.face?.font ?? font;
+      (sctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = word.face?.track ?? bodyTrack;
       sctx.textBaseline = "alphabetic";
       sctx.fillStyle = "#000";
       if (word.img) sctx.drawImage(word.img, 0, 0, word.w, word.h);
-      else sctx.fillText(word.text, 0, ascent);
+      else sctx.fillText(word.text, 0, word.face?.ascent ?? ascent);
       const data = sctx.getImageData(0, 0, cw, ch).data;
       const xs: number[] = [];
       const ys: number[] = [];
