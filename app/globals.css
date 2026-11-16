@@ -779,3 +779,85 @@ html:has(.glass-stage) .panel-toggle {
 html[data-panel] .sound {
   right: 282px;
 }
+
+/* The enter moment: a veil in the page colour with the lockup and one word.
+   Pressing it starts the sound and the opening, then it fades away. */
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 44px;
+  width: 100%;
+  padding: 0;
+  color: var(--ink);
+  background: var(--paper);
+  border: 0;
+  cursor: pointer;
+  transition: opacity 1.8s ease 0.2s;
+}
+
+.gate.leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gate-mark {
+  width: min(300px, 62vw);
+  aspect-ratio: 400 / 120;
+  background: currentColor;
+  -webkit-mask: url(/mark/lockup-horizontal-light.svg) center / contain no-repeat;
+  mask: url(/mark/lockup-horizontal-light.svg) center / contain no-repeat;
+  opacity: 0;
+  animation: gate-in 1.8s ease 0.3s forwards;
+}
+
+.gate-enter {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding-bottom: 6px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  opacity: 0;
+  animation: gate-in 1.6s ease 1.5s forwards;
+  --to: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.gate:hover .gate-enter,
+.gate:focus-visible .gate-enter {
+  --to: 1;
+  border-bottom-color: currentColor;
+}
+
+.gate:focus-visible {
+  outline: none;
+}
+
+@keyframes gate-in {
+  to {
+    opacity: var(--to, 1);
+  }
+}
+
+html[data-gate] {
+  overflow: hidden;
+}
+
+html[data-gate] .sound,
+html[data-gate] .panel-toggle,
+html[data-gate] .cathedral-bar {
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gate-mark,
+  .gate-enter {
+    animation-duration: 0.01s;
+    animation-delay: 0s;
+  }
+}

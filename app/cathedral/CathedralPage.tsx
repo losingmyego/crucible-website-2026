@@ -48,12 +48,11 @@ const SOUND_KEY = "crucible-site:sound";
 function useChant() {
   const [on, setOn] = useState(false);
   const stop = useRef<(() => void) | null>(null);
-  useEffect(() => {
-    if (readSaved<{ off?: boolean }>(SOUND_KEY)?.off) return;
-    start();
-    return () => stop.current?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(() => () => stop.current?.(), []);
+  // Called from the visitor's press on "enter", which is what lets a browser play sound.
+  const begin = () => {
+    if (!readSaved<{ off?: boolean }>(SOUND_KEY)?.off) start();
+  };
   const toggle = () => {
     if (on) {
       stop.current?.();
@@ -146,7 +145,7 @@ function useChant() {
     };
     setOn(true);
   };
-  return { on, toggle };
+  return { on, toggle, begin };
 }
 
 function Backdrop({ look, replay }: { look: Look; replay: number }) {
@@ -249,6 +248,19 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
   const [look, setLook] = useStored<Look>("crucible-site:home-look", LOOK);
   const [replay, setReplay] = useState(0);
   const chant = useChant();
+  // The enter moment: a veil with the lockup. Nothing opens, and no sound plays, until it is pressed.
+  const [entered, setEntered] = useState(false);
+  const [veil, setVeil] = useState(true); // kept on the page while it fades away
+  const enter = () => {
+    if (entered) return;
+    chant.begin();
+    setEntered(true);
+    setTimeout(() => setVeil(false), 2200);
+  };
+  useEffect(() => {
+    document.documentElement.toggleAttribute("data-gate", !entered);
+    return () => document.documentElement.removeAttribute("data-gate");
+  }, [entered]);
   const set = (patch: Partial<Look>) => setLook({ ...look, ...patch });
 
   // The text face is set on the document so the sand is cut from the same letters.
@@ -310,6 +322,16 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
       </div>
       <div className="actions">
         <button onClick={() => setReplay((n) => n + 1)}>replay load</button>
+        <button
+          onClick={() => {
+            window.scrollTo(0, 0);
+            setVeil(true);
+            setEntered(false);
+            setReplay((n) => n + 1);
+          }}
+        >
+          replay from enter
+        </button>
         <button onClick={() => setLook(LOOK)}>reset look</button>
       </div>
       <p className="head">dust</p>
@@ -326,6 +348,12 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
           <span>Team</span>
         </nav>
       </header>
+      {veil && (
+        <button className={`gate${entered ? " leaving" : ""}`} onClick={enter} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()} aria-label="Enter Crucible" autoFocus>
+          <span className="gate-mark" role="img" aria-label="Crucible" />
+          <span className="gate-enter">Enter</span>
+        </button>
+      )}
       <button className="sound" onClick={chant.toggle} aria-pressed={chant.on} aria-label={chant.on ? "Turn sound off" : "Turn sound on"}>
         {chant.on ? <SpeakerHigh size={18} /> : <SpeakerSlash size={18} />}
       </button>
@@ -334,7 +362,7 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
         variant={{
           name: "home",
           href: "/",
-          backdrop: <Backdrop key={replay} look={look} replay={replay} />,
+          backdrop: entered ? <Backdrop key={replay} look={look} replay={replay} /> : null,
           extra,
         }}
       />
