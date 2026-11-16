@@ -172,6 +172,25 @@ function boot() {
     const empty = !Object.keys(MEM).some((key) => !kept(key.slice(PREFIX.length)));
     if (empty || (!isWorkingCopy() && had?.v !== STAMP)) install(had?.n !== undefined && had.n < OPTIONS.length ? had.n : 0);
   }
+  // "?swap=2-3" on a working copy trades the places of two options in this
+  // browser, once: the address is cleaned up so a reload does not trade them back.
+  const params = new URLSearchParams(window.location.search);
+  const trade = (params.get("swap") || "").match(/^(\d+)-(\d+)$/);
+  if (trade && isWorkingCopy()) {
+    keepWork();
+    const slots = workOrBuiltIn();
+    const a = Number(trade[1]) - 1;
+    const b = Number(trade[2]) - 1;
+    if (a !== b && a >= 0 && b >= 0 && a < slots.length && b < slots.length) {
+      [slots[a], slots[b]] = [slots[b], slots[a]];
+      put("options", { slots });
+      const n = currentOption();
+      if (n === a || n === b) put("option", { n: n === a ? b : a, v: STAMP });
+    }
+    params.delete("swap");
+    const rest = params.toString();
+    history.replaceState(null, "", window.location.pathname + (rest ? "?" + rest : "") + window.location.hash);
+  }
   // Settings carried in the address (a share link) win over what was stored.
   const m = window.location.hash.match(/^#set=([\w-]+)$/);
   if (!m) return;
