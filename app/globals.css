@@ -829,15 +829,33 @@ html[data-panel] .sound {
   padding-bottom: 6px;
   border-bottom: 1px solid color-mix(in srgb, currentColor 45%, transparent);
   opacity: 0;
-  animation: gate-in 1.6s ease 1.5s forwards;
-  --to: 0.7;
+  /* A shimmer: the word sits dim, and a soft band of full-strength ink crosses
+     it every few seconds, the way light catches an edge. */
+  --dim: color-mix(in srgb, currentColor 58%, transparent);
+  background: linear-gradient(100deg, var(--dim) 0%, var(--dim) 42%, currentColor 50%, var(--dim) 58%, var(--dim) 100%) 100% 0 / 300% 100% no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation:
+    gate-in 1.6s ease 1.5s forwards,
+    gate-shimmer 4.2s cubic-bezier(0.4, 0, 0.2, 1) 3s infinite;
   transition: opacity 0.3s ease;
 }
 
 .gate:hover .gate-enter,
 .gate:focus-visible .gate-enter {
-  --to: 1;
-  border-bottom-color: currentColor;
+  /* The whole screen is the button, so the pointer is always over it: the word stays dim and shimmers. */
+  border-bottom-color: color-mix(in srgb, currentColor 70%, transparent);
+}
+
+@keyframes gate-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  55%,
+  to {
+    background-position: 0% 0;
+  }
 }
 
 .gate:focus-visible {
@@ -865,6 +883,9 @@ html[data-gate] .cathedral-bar {
   .gate-enter {
     animation-duration: 0.01s;
     animation-delay: 0s;
+  }
+  .gate-enter {
+    animation-name: gate-in;
   }
 }
 
