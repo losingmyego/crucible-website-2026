@@ -936,7 +936,7 @@ html[data-gate] .cathedral-bar {
   opacity: 1;
 }
 .cathedral-bar nav a {
-  opacity: 0.55;
+  opacity: 0.7;
 }
 .cathedral-bar nav a:hover,
 .cathedral-bar nav a[aria-current="page"] {
