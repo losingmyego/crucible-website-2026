@@ -3,7 +3,7 @@
 // rays read it every frame, and the stylesheet reads the same numbers as CSS
 // variables. While `on` is false (the window tool, for one) every part keeps
 // its own built-in timing.
-export type Part = "window" | "cathedral" | "scrim" | "glow" | "text" | "shade" | "rays";
+export type Part = "window" | "glass" | "cathedral" | "scrim" | "glow" | "text" | "shade" | "rays";
 
 export const opening = {
   on: false,

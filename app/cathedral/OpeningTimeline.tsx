@@ -9,6 +9,7 @@ import { opening, type Part } from "./opening";
 // These are the starting values; the dock at the bottom of the page moves them.
 const CLIPS = {
   window: { at: 0.18, duration: 2.64 },
+  glass: { at: 1.8, duration: 1 },
   cathedral: { at: 0, duration: 2.9 },
   scrim: { at: 0.24, duration: 1.7 },
   glow: { at: 1.1, duration: 1.9 },

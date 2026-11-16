@@ -123,8 +123,8 @@ export function useWindow(canvas: RefObject<HTMLCanvasElement | null>, layers: L
       };
       const tick = () => {
         const t = opening.on ? partway("window") : Math.max(0, Math.min(1, (performance.now() - state.start) / (seconds * 1000)));
-        // On the timeline the lines use nearly the whole bar, so the bar's end is where the drawing ends.
-        const late = opening.on ? 0.86 : 1;
+        // On the timeline the lines use the whole bar, so the bar's end is where the drawing ends. The glass and its light have a bar of their own.
+        const late = opening.on ? 0.78 : 1;
         const fp = ease((t * late) / 0.36);
         // The frame alone gives way to the frame as it sits among the other lines.
         const join = ease((t * late - 0.3) / 0.3);
@@ -144,7 +144,7 @@ export function useWindow(canvas: RefObject<HTMLCanvasElement | null>, layers: L
         g.globalAlpha = 1;
         g.drawImage(B, 0, 0);
         // The leading, the glass and everything between the lines fade in at the end.
-        const rest = ease((t - 0.62) / 0.38);
+        const rest = opening.on ? ease(partway("glass")) : ease((t - 0.62) / 0.38);
 
         if (rest > 0) {
           g.globalAlpha = rest;
