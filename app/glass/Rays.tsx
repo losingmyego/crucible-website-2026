@@ -10,6 +10,7 @@ export type RayLook = {
   raySpread: number; // how widely they fan out
   rayLength: number; // how far they reach, as a share of the screen height
   rayShade: number; // how much the room away from the light is darkened, so the light shows
+  rayShadeColor?: string; // colour of that shade; empty = black on a dark page, the line colour on a light one
   rayMove: number; // how much the shafts drift and breathe
   rayColor: "white" | "warm";
 };
@@ -40,8 +41,9 @@ export default function Rays({ outline, look, ink, top, size, dark, intro }: { o
     const g = c.getContext("2d")!;
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const light = look.rayColor === "warm" ? "255,214,176" : "255,255,255";
-    const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec(ink.trim());
-    const shadeRgb = dark ? "0,0,0" : m ? `${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)}` : "26,26,23";
+    const own = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec((look.rayShadeColor || "").trim());
+    const m = own || /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec(ink.trim());
+    const shadeRgb = dark && !own ? "0,0,0" : m ? `${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)}` : "26,26,23";
     let raf = 0;
     let drawn = false;
     const frame = (now: number) => {
