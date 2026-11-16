@@ -62,6 +62,18 @@ const unpack = (packed: string): Record<string, unknown> => {
 // Things that belong to the visitor, not to a look: they stay when the look is swapped.
 const KEPT = ["panel", "sound", "option", "window-panel"];
 const kept = (name: string) => KEPT.includes(name) || name.startsWith("fold:");
+// A short mark of the options as they are built in now. When they change, the
+// live site puts the new ones in place of whatever a visitor's browser had kept.
+const STAMP = (() => {
+  let h = 0;
+  for (const ch of OPTIONS.join("|")) h = (Math.imul(h, 31) + ch.charCodeAt(0)) | 0;
+  return String(h);
+})();
+// A working copy is this computer or a branch preview; anything else is the live site.
+export const isWorkingCopy = () => {
+  const host = location.hostname;
+  return host === "localhost" || host === "127.0.0.1" || host.includes("-git-") || new URLSearchParams(location.search).has("settings");
+};
 // Put one of the options in place of the current settings.
 function install(n: number) {
   for (const key of Object.keys(MEM)) {
@@ -71,7 +83,7 @@ function install(n: number) {
       localStorage.removeItem(key);
     } catch {}
   }
-  const all = { ...unpack(OPTIONS[n]), option: { n } };
+  const all = { ...unpack(OPTIONS[n]), option: { n, v: STAMP } };
   for (const [name, value] of Object.entries(all)) {
     if (!value || typeof value !== "object" || (kept(name) && name !== "option")) continue;
     MEM[PREFIX + name] = value;
@@ -98,8 +110,13 @@ function boot() {
       } catch {}
     }
   }
-  // A visitor with nothing saved starts on Option 1.
-  if (OPTIONS.length > 0 && !Object.keys(MEM).some((key) => !kept(key.slice(PREFIX.length)))) install(0);
+  // A visitor with nothing saved starts on Option 1. On the live site the built-in
+  // options always win: settings a browser kept from an earlier version are replaced.
+  if (OPTIONS.length > 0) {
+    const had = MEM[PREFIX + "option"] as { n?: number; v?: string } | undefined;
+    const empty = !Object.keys(MEM).some((key) => !kept(key.slice(PREFIX.length)));
+    if (empty || (!isWorkingCopy() && had?.v !== STAMP)) install(had?.n !== undefined && had.n < OPTIONS.length ? had.n : 0);
+  }
   // Settings carried in the address (a share link) win over what was stored.
   const m = window.location.hash.match(/^#set=([\w-]+)$/);
   if (!m) return;
@@ -358,8 +375,7 @@ export function PanelToggle() {
   const [open, setOpen] = useState(false);
   const [working, setWorking] = useState(false);
   useEffect(() => {
-    const host = location.hostname;
-    const ok = host === "localhost" || host === "127.0.0.1" || host.includes("-git-") || new URLSearchParams(location.search).has("settings");
+    const ok = isWorkingCopy();
     setWorking(ok);
     if (!ok) return;
     const saved = readSaved<{ open?: boolean }>(PREFIX + "panel");
