@@ -1094,3 +1094,23 @@ html[data-options] .panel {
 html[data-options][data-timeline][data-panel] .panel {
   max-height: calc(100vh - var(--dock-h, 0px) - 84px);
 }
+
+/* The closing paragraph has nothing after it. */
+.column p:last-of-type {
+  margin-bottom: 0;
+}
+/* The symbol, small, under the closing paragraph. It follows the text's alignment. */
+.column .end {
+  margin-top: 28px;
+  line-height: 0;
+  text-align: var(--text-last, left);
+}
+.column .end-mark {
+  --s: calc(20 / 381.4);
+  display: inline-block;
+  width: calc(282.5px * var(--s));
+  height: 20px;
+  background: var(--ink);
+  -webkit-mask: url(/mark/symbol-light.svg) calc(-58.7px * var(--s)) calc(-9.4px * var(--s)) / calc(400px * var(--s)) calc(400px * var(--s)) no-repeat;
+  mask: url(/mark/symbol-light.svg) calc(-58.7px * var(--s)) calc(-9.4px * var(--s)) / calc(400px * var(--s)) calc(400px * var(--s)) no-repeat;
+}
