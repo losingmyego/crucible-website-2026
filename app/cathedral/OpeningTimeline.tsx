@@ -12,7 +12,7 @@ const CLIPS = {
   cathedral: { at: 0, duration: 2.9 },
   scrim: { at: 0.24, duration: 1.7 },
   glow: { at: 1.1, duration: 1.9 },
-  text: { at: 0.45, duration: 4.9 },
+  text: { at: 0.45, duration: 2.9 },
   shade: { at: 0.24, duration: 2.2 },
   rays: { at: 2.7, duration: 3.8 },
 } satisfies TimelineConfig;
@@ -61,6 +61,25 @@ export default function OpeningTimeline({ go }: { go: boolean }) {
     },
     [],
   );
+
+  // Count the words on screen, so the text's bar covers exactly the words you can see.
+  useEffect(() => {
+    if (!go) return;
+    const count = () => {
+      let n = 0;
+      for (const el of document.querySelectorAll<HTMLElement>(".column p > span")) {
+        const box = el.getBoundingClientRect();
+        if (box.top < window.innerHeight && box.bottom > 0) n = Math.max(n, Number(el.style.getPropertyValue("--i")) || 0);
+      }
+      document.documentElement.style.setProperty("--text-n", String(Math.max(1, n)));
+    };
+    count();
+    window.addEventListener("resize", count);
+    return () => {
+      window.removeEventListener("resize", count);
+      document.documentElement.style.removeProperty("--text-n");
+    };
+  }, [go]);
 
   useEffect(() => {
     if (go) timeline.replay();

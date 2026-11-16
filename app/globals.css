@@ -934,13 +934,14 @@ html[data-timeline] .cathedral.opening .rays-canvas {
   animation: none;
 }
 /* The text: the column sinks into place over the first two fifths, and the
-   words arrive one after another across the whole length. */
+   words arrive one after another across the whole length. --text-n is the
+   number of words on screen, so the last one you can see lands as the bar ends. */
 html[data-timeline]:has(.cathedral.opening.go:not(.glass-stage)) .column {
   animation: column-in calc(var(--text-for) * 0.4) cubic-bezier(0.22, 0.61, 0.2, 1) calc(var(--text-at) - var(--t)) both paused;
 }
 html[data-timeline]:has(.cathedral.opening.go:not(.glass-stage)) .column p > span {
   animation: word-in calc(var(--text-for) * 0.23) cubic-bezier(0.22, 0.61, 0.2, 1) both paused;
-  animation-delay: calc(var(--text-at) - var(--t) + var(--text-for) * 0.77 * (var(--i, 200) / 200 * 0.96 + var(--j, 0) * 0.04));
+  animation-delay: calc(var(--text-at) - var(--t) + var(--text-for) * 0.77 * (min(var(--i, 200), var(--text-n, 200)) / var(--text-n, 200) * 0.96 + var(--j, 0) * 0.04));
 }
 html[data-timeline]:has(.cathedral.opening.go:not(.glass-stage)) .column p > span > .w {
   animation: word-fall calc(var(--text-for) * 0.23) cubic-bezier(0.22, 0.61, 0.2, 1) both paused;

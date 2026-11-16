@@ -61,7 +61,8 @@ export default function Rays({ outline, look, ink, top, size, dark, intro }: { o
       const since = o === undefined || still ? Infinity : began.current ? (now - began.current) / 1000 / (o || 1) : -1;
       if (since < 0) return;
       const ease = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3));
-      const shadeIn = opening.on ? ease(through("shade")) : ease((since - 0.2) / 1.8);
+      const smooth = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+      const shadeIn = opening.on ? smooth(through("shade")) : ease((since - 0.2) / 1.8);
       const sweep = opening.on ? through("rays") : (since - 3.1) / 3.2; // the shafts are the last thing to arrive
       const tall = size * H;
       const open = outline.ratio * tall; // height of the opening
@@ -86,7 +87,9 @@ export default function Rays({ outline, look, ink, top, size, dark, intro }: { o
       for (let k = 0; k < n; k++) {
         const u1 = (rnd(k, 1) * 2 - 1) * 0.96 + Math.sin(time * 0.21 + k * 1.7) * 0.04;
         // Each shaft has its own moment: the ones nearest the middle first.
-        const p = ease((sweep - Math.abs(u1) * 0.35) / 0.65);
+        // On the timeline each shaft brightens evenly, so the bar's length is the time you see them arrive.
+        const along = (sweep - Math.abs(u1) * 0.35) / 0.65;
+        const p = opening.on ? smooth(along) : ease(along);
         if (p <= 0) continue;
         // It starts near the middle and swings out to its place...
         const u = u1 * (0.25 + 0.75 * p);
