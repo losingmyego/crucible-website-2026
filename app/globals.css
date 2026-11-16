@@ -812,7 +812,7 @@ html[data-panel] .sound {
 }
 
 .gate-mark {
-  width: min(120px, 30vw);
+  width: min(160px, 36vw);
   aspect-ratio: 1;
   background: currentColor;
   -webkit-mask: url(/mark/lockup-light.svg) center / contain no-repeat;
