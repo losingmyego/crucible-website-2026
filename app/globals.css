@@ -52,6 +52,7 @@
 html,
 body {
   margin: 0;
+  overflow-x: clip; /* nothing may make the page wider than the screen */
   background: var(--paper);
   color: var(--ink);
 }
@@ -79,7 +80,9 @@ body {
   position: relative;
   z-index: 1;
   width: var(--text-width, 400px);
-  max-width: calc(100vw - 32px);
+  /* The perspective makes lines wider toward the bottom of the screen, so on a
+     narrow screen the column is held in by that much to keep its side margins. */
+  max-width: calc((100vw - 32px) / (1 + var(--text-tilt, 0) / 100));
   margin: 0 auto;
   padding: 45vh 0 110vh;
 }
@@ -758,7 +761,13 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
+  --rx: var(--scrim-rx);
   animation: cathedral-in 2s ease 2s both;
+}
+@media (max-width: 720px) {
+  .cathedral .scrim {
+    --rx: var(--scrim-rx-phone);
+  }
 }
 
 /* On the cathedral page no word is split across lines, including words with a hyphen in them. */
@@ -1122,4 +1131,112 @@ html[data-options][data-timeline][data-panel] .panel {
   background: var(--ink);
   -webkit-mask: url(/mark/symbol-light.svg) center / contain no-repeat;
   mask: url(/mark/symbol-light.svg) center / contain no-repeat;
+}
+
+/* The menu button and the sheet it opens: phones only. */
+.menu-button,
+.menu-sheet {
+  display: none;
+}
+/* The settings panel is not shown on a phone, so the sound switch stays put. */
+@media (max-width: 720px) {
+  html[data-panel] .sound {
+    right: 18px;
+  }
+}
+/* On a phone the page links fold away behind a menu button at the right. The
+   wordmark stays at the left, and the option switcher sits beside the button
+   as numbers only. */
+@media (max-width: 720px) {
+  .cathedral-bar nav {
+    display: none;
+  }
+  .cathedral-bar .bar-word {
+    flex: none;
+  }
+  .menu-button {
+    position: fixed;
+    top: 0;
+    right: 4px;
+    z-index: 71;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 4px;
+    width: 44px;
+    height: 40px;
+    padding: 0;
+    color: var(--ink);
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .menu-button i {
+    display: block;
+    width: 18px;
+    height: 1px;
+    background: currentColor;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  .menu-button.open i:nth-child(1) {
+    transform: translateY(5px) rotate(45deg);
+  }
+  .menu-button.open i:nth-child(2) {
+    opacity: 0;
+  }
+  .menu-button.open i:nth-child(3) {
+    transform: translateY(-5px) rotate(-45deg);
+  }
+  html[data-gate] .menu-button {
+    display: none;
+  }
+  .menu-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding: 76px 16px 24px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    letter-spacing: var(--label-track, 0.5px);
+    text-transform: uppercase;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s;
+  }
+  .menu-sheet.open {
+    opacity: 1;
+    visibility: visible;
+  }
+  .menu-sheet a {
+    color: inherit;
+    text-decoration: none;
+  }
+  /* The wordmark stays readable over the open menu. */
+  html[data-menu] .cathedral-bar {
+    z-index: 71;
+  }
+  html[data-menu] .options {
+    display: none;
+  }
+  .options {
+    top: 0;
+    right: 46px;
+    padding: 7px 0;
+    gap: 0;
+  }
+  .options span {
+    display: none;
+  }
+  .options button {
+    min-width: 26px;
+    height: 26px;
+  }
+  .sound {
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
 }

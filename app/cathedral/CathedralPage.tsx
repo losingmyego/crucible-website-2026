@@ -258,6 +258,10 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
             height: `${look.scrimHeight * 100}vh`,
             opacity: look.scrim,
             background: scrimPaint(look, paper),
+            // The half circle's half width: as set, and on a phone wide enough that
+            // its full colour reaches both edges of the screen.
+            ["--scrim-rx" as string]: `${look.scrimWide * 50}vw`,
+            ["--scrim-rx-phone" as string]: `max(${look.scrimWide * 50}vw, ${Math.round(55 / Math.max(0.05, Math.min(look.scrimSolid, look.scrimEnd)))}vw)`,
           }}
         />
       )}
@@ -273,7 +277,7 @@ function scrimPaint(look: Look, paper: string) {
   const a = Math.min(look.scrimSolid, look.scrimEnd) * 100;
   const b = Math.max(look.scrimSolid, look.scrimEnd) * 100;
   const stops = `${c} 0%, ${c} ${a}%, color-mix(in srgb, ${c} 0%, transparent) ${b}%`;
-  return look.scrimShape === "radial" ? `radial-gradient(ellipse ${look.scrimWide * 50}vw 100% at 50% 100%, ${stops})` : `linear-gradient(to top, ${stops})`;
+  return look.scrimShape === "radial" ? `radial-gradient(ellipse var(--rx) 100% at 50% 100%, ${stops})` : `linear-gradient(to top, ${stops})`;
 }
 
 export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) {
