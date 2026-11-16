@@ -1,0 +1,17 @@
+/* @generated crucible-brand — do not edit. Edit visual-system.json, then run scripts/generate-tokens.mjs. */
+:root {
+  --color-neutral-00: #F6F6F4; /* v1-candidate, D3a */
+  --color-cream: #E8E8E3; /* v1-candidate, D3a */
+  --color-taupe: #A6A299; /* v1-candidate, D3a */
+  --color-smoke: #1A1A17; /* v1-candidate, D3a */
+  --font-headline-v1: 'Semplicita Pro', serif; /* v1-under-review, D11 */
+  --font-body: 'Reddit Sans', system-ui, sans-serif; /* v1-under-review, D11 */
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace; /* v1-under-review, D11 */
+}
+
+/* OPEN, not generated:
+ * --color-accent-heat (D10)
+ * --color-accent-support-1 (D10)
+ * --color-accent-support-2 (D10)
+ * --font-display (D11)
+ */

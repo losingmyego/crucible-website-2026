@@ -1,0 +1,728 @@
+/* Brand kit values (a copy of the kit's generated tokens.css). */
+@import "./tokens.css";
+
+/* JetBrains Mono, copied unchanged from the kit's assets/fonts. */
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --paper: #6e6a66;
+  --ink: #d8d8ca;
+  --far: var(--color-neutral-00);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  position: relative;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.column {
+  font-family: var(--text-font, inherit);
+  font-size: var(--text-size, inherit);
+  position: relative;
+  z-index: 1;
+  width: var(--text-width, 400px);
+  max-width: calc(100vw - 32px);
+  margin: 0 auto;
+  padding: 45vh 0 110vh;
+}
+
+.column p {
+  margin: 0 0 1.2em;
+  /* Justified, with three things that keep the gaps small: words may break
+     with a hyphen, the base word space is tighter so stretched lines land
+     near normal, and the browser balances line breaks across the paragraph. */
+  text-align: var(--text-align, justify);
+  text-align-last: left;
+  -webkit-hyphens: var(--text-hyphens, auto);
+  hyphens: var(--text-hyphens, auto);
+  hyphenate-limit-chars: 5 2 3;
+  word-spacing: var(--text-space, -0.18em);
+  text-wrap: pretty;
+}
+
+/* A section header inside the text: always the mono face. */
+.column p.head {
+  font-family: var(--font-mono);
+  margin: 3.5em 0 1.6em;
+  text-align: left;
+  hyphens: none;
+  -webkit-hyphens: none;
+  word-spacing: normal;
+}
+
+/* Each word is its own span so it can be swapped for sand grains. */
+.w {
+  /* Coming back: wait for the sand to gather, then fade in over it. */
+  transition: opacity calc(var(--back, 0.7s) * 0.45 + 120ms) ease calc(var(--back, 0.7s) * 0.6);
+}
+
+.w.gone {
+  opacity: 0;
+  transition: none;
+}
+
+/* Covers the whole page and clips the canvas so it never adds scroll height. */
+.sand-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.sand {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+
+.panel {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 3;
+  width: 240px;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 12px 14px;
+  color: #000;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(6px);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.panel label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.panel label.file {
+  margin-bottom: 0;
+}
+
+.panel label span {
+  display: flex;
+  justify-content: space-between;
+}
+
+.panel input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
+
+.panel .actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.panel .file input {
+  display: none;
+}
+
+.panel .note {
+  margin: 8px 0 0;
+  opacity: 0.6;
+}
+
+.panel .file,
+.panel button {
+  font: inherit;
+  background: none;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  padding: 3px 6px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .panel {
+    display: none;
+  }
+}
+
+/* Dashed line that shows where the sand starts while its slider is dragged. */
+.guide {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px dashed var(--ink);
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity 400ms ease;
+}
+
+.panel .swatch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.panel .swatch span {
+  flex: 1;
+}
+
+.panel input[type="color"] {
+  width: 28px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  background: none;
+}
+
+.panel .versions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.panel .versions a {
+  flex: 1;
+  padding: 4px 6px;
+  text-align: center;
+  color: #000;
+  text-decoration: none;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.panel .versions a.on {
+  color: #fff;
+  background: #000;
+}
+
+/* The horizontal lockup, light master, above the text. */
+.logo {
+  display: block;
+  height: 40px;
+  width: auto;
+  margin: 0 auto 56px;
+}
+
+.panel .swatch {
+  flex-wrap: wrap;
+}
+
+.panel .chips {
+  flex: 0 0 100%;
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.panel .chips button {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+.panel .chips button.on {
+  outline: 2px solid #000;
+  outline-offset: 1px;
+}
+
+.panel .versions {
+  flex-wrap: wrap;
+}
+
+.panel .versions a {
+  flex: 1 0 30%;
+}
+
+.panel .actions {
+  flex-wrap: wrap;
+}
+
+/* Shared by versions 3 and 4: plain paragraphs that arrive one after another. */
+.column-topo p {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.column-topo .logo {
+  margin-left: 0;
+}
+
+@keyframes shaft {
+  0% {
+    transform: translateX(70%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-70%);
+    opacity: 0;
+  }
+}
+
+/* ---------- The topography page ---------- */
+
+.topo {
+  position: relative;
+  min-height: 100vh;
+}
+
+.contours {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.column-topo {
+  margin-right: 0;
+  padding-top: 38vh;
+  padding-bottom: 60vh;
+}
+
+.column-topo .logo {
+  opacity: 0;
+}
+
+.topo.shown .column-topo .logo {
+  opacity: 1;
+  transition: opacity 1.4s ease;
+}
+
+.topo.shown .column-topo p {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 1.2s ease calc(0.4s + var(--i) * 0.14s),
+    transform 1.2s ease calc(0.4s + var(--i) * 0.14s);
+}
+
+/* Small map label, bottom left. */
+.map-label {
+  position: fixed;
+  left: 24px;
+  bottom: 22px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 10px;
+  line-height: 1.3;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: pre;
+  color: var(--ink);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.topo.shown .map-label {
+  opacity: 0.6;
+  transition: opacity 1.6s ease 1.2s;
+}
+
+/* The theme or preset in play. */
+.panel .actions button.on {
+  color: #fff;
+  background: #000;
+}
+
+/* ---- The homepage: the cathedral hero ---- */
+.cathedral {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  --cx: 50vw;
+  --cy: calc(var(--win-top) + var(--win-h) * 0.5);
+  --zoom: calc(1 + var(--walk, 0) * var(--walk-by, 0.5) * 0.35);
+}
+
+/* Light falling from the window onto the text. */
+.cathedral .beam {
+  position: absolute;
+  left: var(--cx);
+  top: calc(var(--win-top) + var(--win-h) * 0.4);
+  width: calc(var(--win-h) * 2.6);
+  height: 120vh;
+  transform: translateX(-50%);
+  background: conic-gradient(from 180deg at 50% 0, transparent -22deg, rgba(255, 255, 255, 0.9) -8deg, rgba(255, 255, 255, 0.9) 8deg, transparent 22deg);
+  -webkit-mask-image: linear-gradient(to bottom, #000, rgba(0, 0, 0, 0.55) 45%, transparent 90%);
+  mask-image: linear-gradient(to bottom, #000, rgba(0, 0, 0, 0.55) 45%, transparent 90%);
+  filter: blur(18px);
+  opacity: calc(var(--light) * 0.75);
+  animation: cathedral-in 2.6s ease 0.6s both;
+}
+
+.cathedral.dark .beam {
+  opacity: calc(var(--light) * 0.16);
+}
+
+.cathedral .win-canvas {
+  position: absolute;
+  left: var(--cx);
+  top: var(--win-top);
+  height: var(--win-h);
+  transform: translateX(-50%);
+}
+
+@keyframes cathedral-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes cathedral-glow {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes cathedral-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.cathedral-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: flex-start;
+  gap: 40px;
+  align-items: center;
+  padding: 18px 24px;
+  pointer-events: none;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.cathedral-bar nav {
+  display: flex;
+  gap: 28px;
+  opacity: 0.55;
+}
+
+.cathedral-bar button {
+  pointer-events: auto;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.cathedral-bar button[aria-pressed="true"] {
+  opacity: 1;
+}
+
+.panel .group .head {
+  margin: 10px 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+}
+
+.panel .actions.pick {
+  margin: 0 0 8px;
+}
+
+.panel .actions.pick button.on {
+  color: #fff;
+  background: #000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cathedral * {
+    animation: none !important;
+  }
+}
+
+.cathedral-bar button {
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .cathedral-bar {
+    gap: 20px;
+    padding: 14px 16px;
+  }
+
+  .cathedral-bar nav {
+    gap: 16px;
+  }
+}
+
+/* ---- The window tool ---- */
+.glass-stage {
+  pointer-events: auto;
+}
+
+.glass-stage .beam {
+  animation: none;
+}
+
+.panel .actions.pick {
+  flex-wrap: wrap;
+}
+
+/* The drawn cathedral: a full-screen drawing behind the window, fading at the edges. */
+.cathedral .nave {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-mask-image: radial-gradient(ellipse 62% 75% at 50% 45%, #000 40%, transparent 100%);
+  mask-image: radial-gradient(ellipse 62% 75% at 50% 45%, #000 40%, transparent 100%);
+}
+
+/* The window tool's panel: sections that fold, some with an on/off switch. */
+.panel .fold {
+  border-top: 1px solid rgba(0, 0, 0, 0.14);
+}
+.panel .fold-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel .fold-head button {
+  border: 0;
+  background: none;
+  margin: 0;
+}
+.panel .fold-title {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  padding: 8px 0;
+  cursor: pointer;
+}
+.panel .fold-title i {
+  display: inline-block;
+  width: 1.2em;
+  font-style: normal;
+  opacity: 0.6;
+}
+.panel .fold.off .fold-title,
+.panel .fold.off .fold-body {
+  opacity: 0.4;
+}
+.panel .fold-head .switch {
+  padding: 2px 8px;
+  border: 1px solid currentColor;
+  border-radius: 99px;
+  min-width: 3.4em;
+  flex: none;
+  cursor: pointer;
+  opacity: 0.55;
+}
+.panel .fold-head .switch.on {
+  color: #fff;
+  background: #000;
+  border-color: #000;
+  opacity: 1;
+}
+.panel .fold-body {
+  padding: 2px 0 10px;
+}
+.panel .fold-all {
+  margin-bottom: 4px;
+}
+
+/* Shafts of light through the window. */
+.cathedral .rays-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  filter: blur(3px);
+  animation: cathedral-in 3s ease 2.6s both;
+}
+.glass-stage .rays-canvas {
+  animation: none;
+}
+
+/* The opening. Everything waits until the window has been drawn, then moves
+   as one piece with overlaps: the cathedral rises from the floor and settles,
+   the window draws down from its point while that is still happening, the
+   light comes up, and the text arrives paragraph by paragraph. */
+.cathedral {
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.33, 0, 0.15, 1);
+}
+.cathedral .nave-rise {
+  position: absolute;
+  inset: 0;
+}
+.cathedral.opening:not(.go) * {
+  animation-play-state: paused !important;
+}
+.cathedral.opening .nave-rise {
+  -webkit-mask-size: 100% 300%;
+  mask-size: 100% 300%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+.cathedral.opening .nave-rise {
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 34%, transparent 60%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 0%, #000 34%, transparent 60%, transparent 100%);
+  transform-origin: 50% calc(var(--win-top) + var(--win-h) * 0.6);
+  animation:
+    wipe-up calc(var(--o, 1) * 1.9s) var(--ease-soft) 0s both,
+    settle calc(var(--o, 1) * 2.4s) var(--ease-out) 0s both;
+}
+.cathedral.opening .scrim {
+  animation: cathedral-in calc(var(--o, 1) * 1.4s) var(--ease-out) calc(var(--o, 1) * 0.2s) both;
+}
+.cathedral.opening .beam {
+  animation: cathedral-in calc(var(--o, 1) * 1.6s) var(--ease-out) calc(var(--o, 1) * 0.9s) both;
+}
+.cathedral.opening .rays-canvas {
+  animation: cathedral-in calc(var(--o, 1) * 2s) var(--ease-out) calc(var(--o, 1) * 1.2s) both;
+}
+@keyframes wipe-up {
+  from {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+  to {
+    -webkit-mask-position: 0 100%;
+    mask-position: 0 100%;
+  }
+}
+@keyframes wipe-down {
+  from {
+    -webkit-mask-position: 0 100%;
+    mask-position: 0 100%;
+  }
+  to {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+}
+@keyframes settle {
+  from {
+    transform: scale(1.06);
+    filter: blur(5px);
+  }
+}
+@keyframes sharpen {
+  from {
+    filter: blur(4px);
+  }
+}
+/* The text waits, then arrives word by word in reading order, each word
+   coming into focus as the one before it is still settling. */
+:root:has(.cathedral.opening:not(.go):not(.glass-stage)) .column p {
+  opacity: 0;
+}
+:root:has(.cathedral.opening.go:not(.glass-stage)) .column p > span {
+  animation: word-in calc(var(--o, 1) * 1s) cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: calc(var(--o, 1) * (0.9s + var(--i, 200) * 7ms));
+}
+@keyframes word-in {
+  from {
+    opacity: 0;
+    filter: blur(7px);
+  }
+  60% {
+    filter: blur(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cathedral.opening .nave-rise,
+  .cathedral.opening .win-canvas,
+  :root:has(.cathedral) .column p,
+  :root:has(.cathedral) .column p > span {
+    animation: none !important;
+    -webkit-mask-image: none;
+    mask-image: none;
+    opacity: 1 !important;
+  }
+}
+
+/* A shade rising from the bottom of the screen, so the text reads over the lines. */
+.cathedral .scrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  animation: cathedral-in 2s ease 2s both;
+}
+
+/* On the cathedral page no word is split across lines, including words with a hyphen in them. */
+.column p .w {
+  white-space: var(--text-word, normal);
+}
+
+/* The settings panel is a working tool: hidden until the settings button is
+   pressed. The window tool always shows its panel. */
+html:not([data-panel]):not(:has(.glass-stage)) .panel {
+  display: none;
+}
+
+.panel-toggle {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 60;
+  font: 11px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--paper) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 35%, transparent);
+  border-radius: 999px;
+  padding: 8px 12px;
+  opacity: 0.45;
+  cursor: pointer;
+}
+
+.panel-toggle:hover,
+.panel-toggle[aria-pressed="true"] {
+  opacity: 1;
+}
+
+html:has(.glass-stage) .panel-toggle {
+  display: none;
+}
