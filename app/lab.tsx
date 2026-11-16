@@ -47,6 +47,7 @@ let storageOk = false;
 let hashTimer: ReturnType<typeof setTimeout> | null = null;
 
 const pack = () => {
+  keepWork();
   const all: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(MEM)) all[key.slice(PREFIX.length)] = value;
   return btoa(encodeURIComponent(JSON.stringify(all))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -60,7 +61,7 @@ const unpack = (packed: string): Record<string, unknown> => {
   }
 };
 // Things that belong to the visitor, not to a look: they stay when the look is swapped.
-const KEPT = ["panel", "sound", "option", "window-panel"];
+const KEPT = ["panel", "sound", "option", "options", "window-panel"];
 const kept = (name: string) => KEPT.includes(name) || name.startsWith("fold:");
 // A short mark of the options as they are built in now. When they change, the
 // live site puts the new ones in place of whatever a visitor's browser had kept.
@@ -74,8 +75,46 @@ export const isWorkingCopy = () => {
   const host = location.hostname;
   return host === "localhost" || host === "127.0.0.1" || host.includes("-git-") || new URLSearchParams(location.search).has("settings");
 };
-// Put one of the options in place of the current settings.
-function install(n: number) {
+// A look is every saved setting that makes up one option: colours, type, window, sand.
+type LookSet = Record<string, unknown>;
+const lookOnly = (all: Record<string, unknown>): LookSet => {
+  const out: LookSet = {};
+  for (const [name, value] of Object.entries(all)) if (value && typeof value === "object" && !kept(name)) out[name] = value;
+  return out;
+};
+const lookNow = (): LookSet => {
+  const all: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(MEM)) all[key.slice(PREFIX.length)] = value;
+  return JSON.parse(JSON.stringify(lookOnly(all)));
+};
+const put = (name: string, value: unknown) => {
+  MEM[PREFIX + name] = value;
+  try {
+    localStorage.setItem(PREFIX + name, JSON.stringify(value));
+  } catch {}
+};
+// On a working copy every option is kept as it was last left, so settings
+// changed while on an option are still there after switching away and back.
+// The live site never reads these: it shows the built-in options only.
+const WORK = PREFIX + "options";
+const work = (): LookSet[] | null => {
+  const slots = (MEM[WORK] as { slots?: LookSet[] } | undefined)?.slots;
+  return Array.isArray(slots) && slots.length > 0 ? slots : null;
+};
+const currentOption = () => (MEM[PREFIX + "option"] as { n?: number } | undefined)?.n ?? -1;
+// The working options, made from the built-in ones the first time they are needed.
+const workOrBuiltIn = (): LookSet[] => work() ?? OPTIONS.map((packed) => lookOnly(unpack(packed)));
+// Record the settings on screen as the current option.
+function keepWork() {
+  if (typeof window === "undefined" || !isWorkingCopy()) return;
+  const n = currentOption();
+  const slots = workOrBuiltIn();
+  if (n < 0 || n >= slots.length) return;
+  slots[n] = lookNow();
+  put("options", { slots });
+}
+// Put a look in place of the current settings.
+function install(n: number, look: LookSet = lookOnly(unpack(OPTIONS[n]))) {
   for (const key of Object.keys(MEM)) {
     if (kept(key.slice(PREFIX.length))) continue;
     delete MEM[key];
@@ -83,14 +122,8 @@ function install(n: number) {
       localStorage.removeItem(key);
     } catch {}
   }
-  const all = { ...unpack(OPTIONS[n]), option: { n, v: STAMP } };
-  for (const [name, value] of Object.entries(all)) {
-    if (!value || typeof value !== "object" || (kept(name) && name !== "option")) continue;
-    MEM[PREFIX + name] = value;
-    try {
-      localStorage.setItem(PREFIX + name, JSON.stringify(value));
-    } catch {}
-  }
+  for (const [name, value] of Object.entries(look)) put(name, value);
+  put("option", { n, v: STAMP });
 }
 
 // Sent in this tab when another tab has changed a saved setting; detail is its key.
@@ -244,7 +277,7 @@ export function ShareButton() {
 }
 
 export const SAVED_NOTE =
-  "Everything is remembered in this browser. The theme carries across every view, and each theme keeps its own colours. To show someone else your settings, send them the share link.";
+  "Everything is remembered in this browser, and each option keeps its own settings and colours. The share link carries every option.";
 
 export function ThemeButtons({ current, onPick }: { current?: ThemeName; onPick: (name: ThemeName) => void }) {
   return (
@@ -435,33 +468,81 @@ export function PanelToggle() {
 export const SKIP_GATE = "crucible-site-skip-gate";
 export function OptionSwitch() {
   const [current, setCurrent] = useState(-1);
+  const [count, setCount] = useState(0);
+  const [working, setWorking] = useState(false);
   useEffect(() => {
-    if (OPTIONS.length < 2) return;
-    setCurrent(readSaved<{ n?: number }>(PREFIX + "option")?.n ?? -1);
+    boot();
+    const ok = isWorkingCopy();
+    setWorking(ok);
+    const read = () => {
+      setCount(ok ? workOrBuiltIn().length : OPTIONS.length);
+      setCurrent(currentOption());
+    };
+    read();
     document.documentElement.setAttribute("data-options", "");
+    return onSync([WORK, PREFIX + "option"], read);
   }, []);
-  if (OPTIONS.length < 2) return null;
+  if (count < 1 || (!working && count < 2)) return null;
+  const go = (n: number, look?: LookSet) => {
+    try {
+      sessionStorage.setItem(SKIP_GATE, "1");
+    } catch {}
+    install(n, look);
+    location.reload();
+  };
   return (
     <div className="options" role="group" aria-label="Options">
       <span>Option</span>
-      {OPTIONS.map((_, n) => (
+      {Array.from({ length: count }, (_, n) => (
         <button
           key={n}
           aria-pressed={n === current}
           onClick={() => {
             if (n === current) return;
-            // On a working copy, keep what was there, so a swap never loses unsaved work.
-            try {
-              localStorage.setItem("crucible-site-before-swap", shareLink());
-              sessionStorage.setItem(SKIP_GATE, "1");
-            } catch {}
-            install(n);
-            location.reload();
+            if (!working) return go(n);
+            // Leave the current option as it is now, then bring the other one back as it was left.
+            keepWork();
+            go(n, workOrBuiltIn()[n]);
           }}
         >
           {n + 1}
         </button>
       ))}
+      {working && (
+        <button
+          className="more"
+          title="Add an option: a copy of this one, to change"
+          aria-label="Add an option"
+          onClick={() => {
+            keepWork();
+            const slots = workOrBuiltIn();
+            slots.push(lookNow());
+            put("options", { slots });
+            put("option", { n: slots.length - 1, v: STAMP });
+            setCount(slots.length);
+            setCurrent(slots.length - 1);
+          }}
+        >
+          +
+        </button>
+      )}
+      {working && count > 1 && current >= 0 && (
+        <button
+          className="more"
+          title="Remove this option"
+          aria-label="Remove this option"
+          onClick={() => {
+            if (!window.confirm(`Remove option ${current + 1}? Its settings will be gone.`)) return;
+            const slots = workOrBuiltIn();
+            slots.splice(current, 1);
+            put("options", { slots });
+            const next = Math.min(current, slots.length - 1);
+            go(next, slots[next]);
+          }}
+        >
+          −
+        </button>
+      )}
     </div>
   );
 }

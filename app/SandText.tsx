@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Fold, SAND_FAR, SAVED_NOTE, ShareButton, THEMES, ThemeButtons, Versions, readSaved, useThemeColors, writeSaved, type ThemeName } from "./lab";
+import { Fold, SAND_FAR, SAVED_NOTE, ShareButton, THEMES, Versions, readSaved, useThemeColors, writeSaved, type ThemeName } from "./lab";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 
@@ -832,7 +832,6 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
           {variant?.scroll}
         </Fold>
         <Fold id="colour" title="colour" open>
-          <ThemeButtons current={themed.theme} onPick={themed.pick} />
           {swatch("paper", "background")}
           {swatch("ink", "text")}
           {variant && swatch("line", "lines (window and cathedral)")}

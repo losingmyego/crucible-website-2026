@@ -320,7 +320,6 @@ export default function GlassTool() {
             "page",
             "size, place, colour",
             <>
-              {choice("theme", [["light", "light"], ["medium", "medium"], ["dark", "dark"], ["custom", "custom"]])}
               {slider("size", "window size", 0.3, 0.95, 0.01)}
               {slider("top", "window top", 0, 0.4, 0.01)}
             </>,
