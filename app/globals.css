@@ -38,6 +38,7 @@ body {
 .column {
   font-family: var(--text-font, inherit);
   font-size: var(--text-size, inherit);
+  font-weight: var(--text-weight, inherit);
   line-height: var(--text-line, inherit);
   letter-spacing: var(--text-track, normal);
   position: relative;
@@ -840,7 +841,7 @@ html[data-panel] .sound {
   -webkit-text-fill-color: transparent;
   animation:
     gate-in 1.6s ease 1.5s forwards,
-    gate-shimmer 4.2s cubic-bezier(0.4, 0, 0.2, 1) 3s infinite;
+    gate-shimmer 4.2s cubic-bezier(0.4, 0, 0.2, 1) 3.35s infinite; /* a quarter second after the word has faded in at 3.1s */
   transition: opacity 0.3s ease;
 }
 

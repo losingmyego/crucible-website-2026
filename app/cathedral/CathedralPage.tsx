@@ -29,8 +29,9 @@ import { outlineOf, Outline } from "../glass/nave";
 type Look = {
   walk: number; // how far the cathedral comes toward you as you scroll
   align: "left" | "center" | "justified"; // how the lines of text are set
-  font: "cantarell" | "times" | "sans" | "mono"; // the text face. Cantarell is served with the site; Times and sans are system faces.
+  font: "asta" | "cantarell" | "times" | "sans" | "mono"; // the text face. Asta Sans and Cantarell are served with the site; Times and sans are system faces.
   wrap: "normal" | "tidy" | "even"; // how lines break: as they fall, avoiding short last lines, or all lines near the same length
+  textWeight: number; // Asta Sans only: its weight, 300 to 800
   textSize: number; // in pixels
   textLine: number; // line height, as a multiple of the text size
   textTrack: number; // letter spacing, in hundredths of the text size (0 = as the face is drawn)
@@ -47,8 +48,9 @@ type Look = {
 };
 
 // Neesh's settings as of 2026-11-16.
-const LOOK: Look = { walk: 0.5, font: "cantarell", align: "left", wrap: "tidy", open: 1.2, textSize: 15, textLine: 1.6, textTrack: 0, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page", scrimColor: "#2a1c15", scrimShape: "linear", scrimSolid: 0.25, scrimEnd: 1, scrimWide: 1.2 };
+const LOOK: Look = { walk: 0.5, font: "asta", textWeight: 350, align: "left", wrap: "tidy", open: 1.2, textSize: 15, textLine: 1.6, textTrack: 0, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page", scrimColor: "#2a1c15", scrimShape: "linear", scrimSolid: 0.25, scrimEnd: 1, scrimWide: 1.2 };
 const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+const ASTA = '"Asta Sans Variable", "Helvetica Neue", Arial, sans-serif';
 const CANTARELL = 'Cantarell, "Helvetica Neue", Arial, sans-serif';
 const TIMES = '"Times New Roman", Times, serif';
 
@@ -283,6 +285,7 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
   useEffect(() => {
     const root = document.documentElement;
     if (look.font === "sans") root.style.setProperty("--text-font", SANS);
+    else if (look.font === "asta") root.style.setProperty("--text-font", ASTA);
     else if (look.font === "cantarell") root.style.setProperty("--text-font", CANTARELL);
     else if (look.font === "times") root.style.setProperty("--text-font", TIMES);
     else root.style.removeProperty("--text-font");
@@ -293,6 +296,8 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
     root.style.setProperty("--text-hyphens", "none"); // words are never broken across lines here
     root.style.setProperty("--text-word", "nowrap");
     root.style.setProperty("--text-space", look.align === "justified" && look.font === "mono" ? "-0.18em" : "0em");
+    if (look.font === "asta") root.style.setProperty("--text-weight", String(look.textWeight));
+    else root.style.removeProperty("--text-weight");
     root.style.setProperty("--text-size", `${look.textSize}px`);
     root.style.setProperty("--text-line", String(look.textLine));
     root.style.setProperty("--text-track", `${look.textTrack / 100}em`);
@@ -303,9 +308,9 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
     root.style.setProperty("--text-width", `${look.textWidth}px`);
     return () => {
       clearTimeout(moved);
-      for (const k of ["--text-wrap", "--text-last", "--text-font", "--text-size", "--text-line", "--text-track", "--text-width", "--text-align", "--text-hyphens", "--text-word", "--text-space", "--o"]) root.style.removeProperty(k);
+      for (const k of ["--text-wrap", "--text-last", "--text-font", "--text-size", "--text-weight", "--text-line", "--text-track", "--text-width", "--text-align", "--text-hyphens", "--text-word", "--text-space", "--o"]) root.style.removeProperty(k);
     };
-  }, [look.wrap, look.font, look.align, look.textSize, look.textLine, look.textTrack, look.textWidth]);
+  }, [look.wrap, look.font, look.textWeight, look.align, look.textSize, look.textLine, look.textTrack, look.textWidth]);
 
   const slider = (key: keyof Look, label: string, min: number, max: number, step: number) => (
     <label>
@@ -347,14 +352,15 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
       {slider("scrimSolid", "gradient stop: full colour until", 0, 1, 0.01)}
       {slider("scrimEnd", "gradient stop: faded out by", 0, 1, 0.01)}
       {look.scrimShape === "radial" && slider("scrimWide", "half circle width", 0.3, 3, 0.01)}
+      {look.font === "asta" && slider("textWeight", "weight (asta sans)", 300, 800, 10)}
       {slider("textSize", "text size (px)", 10, 28, 0.5)}
       {slider("textLine", "line height", 1, 2.4, 0.01)}
       {slider("textTrack", "letter spacing (kerning)", -5, 20, 0.1)}
       {slider("textWidth", "text column width (px)", 280, 900, 10)}
       <div className="actions">
-        {(["cantarell", "times", "sans", "mono"] as const).map((f) => (
+        {(["asta", "cantarell", "times", "sans", "mono"] as const).map((f) => (
           <button key={f} className={look.font === f ? "on" : ""} onClick={() => set({ font: f })}>
-            {f === "times" ? "times new roman" : f}
+            {f === "times" ? "times new roman" : f === "asta" ? "asta sans" : f}
           </button>
         ))}
       </div>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-// Cantarell, from Google Fonts (SIL Open Font Licence), served with the site.
+// Asta Sans (variable weight) and Cantarell, from Google Fonts (SIL Open Font Licence), served with the site.
+import "@fontsource-variable/asta-sans";
 import "@fontsource/cantarell/400.css";
 import "@fontsource/cantarell/400-italic.css";
 import "@fontsource/cantarell/700.css";
