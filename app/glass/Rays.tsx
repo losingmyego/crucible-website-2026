@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Outline } from "./nave";
+import { opening, through } from "../cathedral/opening";
 
 export type RayLook = {
   rays: number; // strength of the shafts of light, 0 = off
@@ -60,8 +61,8 @@ export default function Rays({ outline, look, ink, top, size, dark, intro }: { o
       const since = o === undefined || still ? Infinity : began.current ? (now - began.current) / 1000 / (o || 1) : -1;
       if (since < 0) return;
       const ease = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3));
-      const shadeIn = ease((since - 0.2) / 1.8);
-      const sweep = (since - 3.1 + 1 / (o || 1)) / 3.2; // the shafts are the last thing to arrive, one second sooner than first set
+      const shadeIn = opening.on ? ease(through("shade")) : ease((since - 0.2) / 1.8);
+      const sweep = opening.on ? through("rays") : (since - 3.1) / 3.2; // the shafts are the last thing to arrive
       const tall = size * H;
       const open = outline.ratio * tall; // height of the opening
       const cx = W / 2 + outline.dx * tall;

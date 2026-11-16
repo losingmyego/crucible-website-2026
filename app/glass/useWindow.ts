@@ -2,6 +2,7 @@
 
 import { RefObject, useEffect, useRef } from "react";
 import { draw, paint, Layers, Settings, Stroke } from "./engine";
+import { opening, through as partway } from "../cathedral/opening";
 
 const HEX = /^#[0-9a-f]{6}$/i;
 export const rgb = (hex: string): [number, number, number] => {
@@ -121,7 +122,7 @@ export function useWindow(canvas: RefObject<HTMLCanvasElement | null>, layers: L
         c.globalCompositeOperation = "source-over";
       };
       const tick = () => {
-        const t = Math.max(0, Math.min(1, (performance.now() - state.start) / (seconds * 1000)));
+        const t = opening.on ? partway("window") : Math.max(0, Math.min(1, (performance.now() - state.start) / (seconds * 1000)));
         const fp = ease(t / 0.36);
         // The frame alone gives way to the frame as it sits among the other lines.
         const join = ease((t - 0.3) / 0.3);
@@ -147,7 +148,8 @@ export function useWindow(canvas: RefObject<HTMLCanvasElement | null>, layers: L
           g.drawImage(full, 0, 0);
           g.globalAlpha = 1;
         }
-        if (t < 1) state.raf = requestAnimationFrame(tick);
+        // On the homepage the timeline holds the clock, so it keeps listening for a scrub or a replay.
+        if (t < 1 || opening.on) state.raf = requestAnimationFrame(tick);
         else state.start = 0;
       };
       tick();

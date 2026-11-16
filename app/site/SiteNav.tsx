@@ -11,6 +11,7 @@ export const PAGES = [
 export default function SiteNav({ current }: { current?: string }) {
   return (
     <header className="cathedral-bar">
+      <Link href="/" className="bar-word" aria-label="Crucible, home" />
       <nav>
         {PAGES.map((p) =>
           p.away ? (

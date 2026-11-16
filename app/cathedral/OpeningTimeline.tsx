@@ -1,0 +1,77 @@
+"use client";
+
+import { useEffect, useLayoutEffect, useState } from "react";
+import { DialTimeline, useDialTimeline, type TimelineConfig } from "dialkit";
+import "dialkit/styles.css";
+import { opening, type Part } from "./opening";
+
+// When each part of the opening arrives and how long it takes, in seconds.
+// These are the starting values; the dock at the bottom of the page moves them.
+const CLIPS = {
+  window: { at: 0.18, duration: 2.64 },
+  cathedral: { at: 0, duration: 2.9 },
+  scrim: { at: 0.24, duration: 1.7 },
+  glow: { at: 1.1, duration: 1.9 },
+  text: { at: 0.45, duration: 4.9 },
+  shade: { at: 0.24, duration: 2.2 },
+  rays: { at: 2.7, duration: 3.8 },
+} satisfies TimelineConfig;
+
+const PARTS = Object.keys(CLIPS) as Part[];
+
+// Runs the opening from a DialKit timeline. `go` starts it. The dock shows
+// whenever the settings panel is open.
+export default function OpeningTimeline({ go }: { go: boolean }) {
+  const timeline = useDialTimeline("Opening", CLIPS, { id: "crucible-opening", persist: true, autoplay: false });
+  const [panel, setPanel] = useState(false);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const read = () => setPanel(root.hasAttribute("data-panel"));
+    read();
+    const watch = new MutationObserver(read);
+    watch.observe(root, { attributes: true, attributeFilter: ["data-panel"] });
+    return () => watch.disconnect();
+  }, []);
+
+  // Hand the playhead and the timings to the page, before it paints.
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    opening.on = true;
+    opening.time = timeline.time;
+    root.setAttribute("data-timeline", "");
+    root.style.setProperty("--t", `${timeline.time}s`);
+    for (const name of PARTS) {
+      const clip = timeline[name];
+      opening.parts[name] = { at: clip.at, duration: clip.duration };
+      root.style.setProperty(`--${name}-at`, `${clip.at}s`);
+      root.style.setProperty(`--${name}-for`, `${Math.max(0.01, clip.duration)}s`);
+    }
+  });
+  useEffect(
+    () => () => {
+      const root = document.documentElement;
+      opening.on = false;
+      root.removeAttribute("data-timeline");
+      root.style.removeProperty("--t");
+      for (const name of PARTS) {
+        root.style.removeProperty(`--${name}-at`);
+        root.style.removeProperty(`--${name}-for`);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (go) timeline.replay();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [go]);
+
+  // Once it has played through, the dust is told to measure where the words ended up.
+  const playing = timeline.playing;
+  useEffect(() => {
+    if (go && !playing) window.dispatchEvent(new Event("resize"));
+  }, [go, playing]);
+
+  return <DialTimeline productionEnabled visible={panel} theme="dark" />;
+}

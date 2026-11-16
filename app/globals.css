@@ -912,3 +912,57 @@ html[data-gate] .cathedral-bar {
 html:has(.soon) .panel-toggle {
   display: none;
 }
+
+/* ---- The opening on a timeline ----
+   With the timeline running (html[data-timeline]) every part of the opening is
+   held still and placed by the playhead, --t. Each part's start and length come
+   from the timeline as --<part>-at and --<part>-for, so the page shows the same
+   moment whether it is playing, paused or being dragged. */
+html[data-timeline] .cathedral.opening .nave-rise {
+  animation:
+    wipe-up calc(var(--cathedral-for) * 0.8) var(--ease-soft) calc(var(--cathedral-at) - var(--t)) both paused,
+    settle var(--cathedral-for) var(--ease-out) calc(var(--cathedral-at) - var(--t)) both paused;
+}
+html[data-timeline] .cathedral.opening .scrim {
+  animation: cathedral-in var(--scrim-for) var(--ease-out) calc(var(--scrim-at) - var(--t)) both paused;
+}
+html[data-timeline] .cathedral.opening .beam {
+  animation: cathedral-in var(--glow-for) var(--ease-out) calc(var(--glow-at) - var(--t)) both paused;
+}
+/* The shade and the shafts are timed inside the canvas. */
+html[data-timeline] .cathedral.opening .rays-canvas {
+  animation: none;
+}
+/* The text: the column sinks into place over the first two fifths, and the
+   words arrive one after another across the whole length. */
+html[data-timeline]:has(.cathedral.opening.go:not(.glass-stage)) .column {
+  animation: column-in calc(var(--text-for) * 0.4) cubic-bezier(0.22, 0.61, 0.2, 1) calc(var(--text-at) - var(--t)) both paused;
+}
+html[data-timeline]:has(.cathedral.opening.go:not(.glass-stage)) .column p > span {
+  animation: word-in calc(var(--text-for) * 0.23) cubic-bezier(0.22, 0.61, 0.2, 1) both paused;
+  animation-delay: calc(var(--text-at) - var(--t) + var(--text-for) * 0.77 * (var(--i, 200) / 200 * 0.96 + var(--j, 0) * 0.04));
+}
+html[data-timeline]:has(.cathedral.opening.go:not(.glass-stage)) .column p > span > .w {
+  animation: word-fall calc(var(--text-for) * 0.23) cubic-bezier(0.22, 0.61, 0.2, 1) both paused;
+  animation-delay: inherit;
+}
+
+/* The wordmark at the left of the header, about the size of the links; it leads home.
+   The master is a 400 square with the letters across the middle (59.15 tall,
+   starting 170 down), so the mask is scaled and shifted to show only them. */
+.bar-word {
+  --h: 12px;
+  color: inherit;
+  --s: calc(var(--h) / 59.15);
+  pointer-events: auto;
+  width: calc(400 * var(--s));
+  height: var(--h);
+  background: currentColor;
+  -webkit-mask: url(/mark/wordmark-light.svg) 0 calc(-170 * var(--s)) / calc(400 * var(--s)) calc(400 * var(--s)) no-repeat;
+  mask: url(/mark/wordmark-light.svg) 0 calc(-170 * var(--s)) / calc(400 * var(--s)) calc(400 * var(--s)) no-repeat;
+}
+/* With the timeline dock along the bottom, the settings button moves up under the header. */
+html[data-timeline][data-panel] .panel-toggle {
+  bottom: auto;
+  top: 52px;
+}

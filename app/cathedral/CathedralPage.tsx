@@ -1,6 +1,7 @@
 "use client";
 
 import SiteNav from "../site/SiteNav";
+import OpeningTimeline from "./OpeningTimeline";
 
 import { useEffect, useRef, useState } from "react";
 import SandText, { sandNeck } from "../SandText";
@@ -215,14 +216,6 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
       clearTimeout(late);
     };
   }, []);
-  // The text drifts into place during the opening; once it has settled, the
-  // dust is told to measure where the words ended up.
-  useEffect(() => {
-    if (!go) return;
-    const done = setTimeout(() => window.dispatchEvent(new Event("resize")), look.open * 2400);
-    return () => clearTimeout(done);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [go]);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -232,12 +225,13 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
       className={`cathedral opening${go ? " go" : ""}${dark ? " dark" : ""}`}
       aria-hidden
       ref={ref}
-      style={{ "--win-top": `${glass.top * 100}vh`, "--win-h": `${glass.size * 100}vh`, "--faint": glass.cathedral, "--light": glass.light, "--walk-by": look.walk, "--o": look.open } as React.CSSProperties}
+      style={{ "--win-top": `${glass.top * 100}vh`, "--win-h": `${glass.size * 100}vh`, "--faint": glass.cathedral, "--light": glass.light, "--walk-by": look.walk } as React.CSSProperties}
     >
+      <OpeningTimeline go={go} />
       {glass.cathedral > 0 && glass.naveView !== "etched" && <Nave outline={outline} look={glass} ink={line} strength={glass.cathedral} top={glass.top} size={glass.size} walk={glass.walk} scroll={glass.walkScroll} play={1} />}
       {glass.cathedral > 0 && glass.naveView === "etched" && <Etched outline={outline} look={glass} ink={line} strength={glass.cathedral} top={glass.top} size={glass.size} scroll={glass.walkScroll} play={1} />}
       <div className="beam" />
-      {(glass.rays > 0 || glass.rayShade > 0) && <Rays outline={outline} look={glass} ink={ink} top={glass.top} size={glass.size} dark={dark} intro={go ? look.open : 0} />}
+      {(glass.rays > 0 || glass.rayShade > 0) && <Rays outline={outline} look={glass} ink={ink} top={glass.top} size={glass.size} dark={dark} intro={go ? 1 : 0} />}
       {look.scrim > 0 && (
         <div
           className="scrim"
@@ -248,7 +242,7 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
           }}
         />
       )}
-      <WindowCanvas ink={line} paper={paper} className="win-canvas" play={1} seconds={2.2 * look.open} onLook={setGlass} onLayers={(L) => setOutline(outlineOf(L))} />
+      <WindowCanvas ink={line} paper={paper} className="win-canvas" play={1} onLook={setGlass} onLayers={(L) => setOutline(outlineOf(L))} />
     </div>
   );
 }
@@ -295,7 +289,6 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
     root.style.setProperty("--text-hyphens", "none"); // words are never broken across lines here
     root.style.setProperty("--text-word", "nowrap");
     root.style.setProperty("--text-space", look.align === "justified" && look.font === "mono" ? "-0.18em" : "0em");
-    root.style.setProperty("--o", String(look.open));
     root.style.setProperty("--text-size", `${look.textSize}px`);
     root.style.setProperty("--text-width", `${look.textWidth}px`);
     return () => {
@@ -316,7 +309,6 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
       <p className="head">window</p>
       <p className="note">The window, its size and place, the cathedral and the light are set in the window tool.</p>
       {slider("walk", "walk in on scroll", 0, 1, 0.05)}
-      {slider("open", "opening length (1 = set pace)", 0.4, 2.5, 0.05)}
       {slider("scrim", "scrim behind the text (0 = off)", 0, 1, 0.01)}
       {slider("scrimHeight", "scrim height", 0.1, 1, 0.01)}
       <div className="actions">
