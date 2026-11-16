@@ -704,7 +704,8 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
             {p.split(" ").map((word, j) => (
               // --i counts words down the page and --j is a little scatter, for bringing the text in word by word.
               <span key={j} style={{ "--i": Math.min(200, starts[i] + j), "--j": (((starts[i] + j) * 37) % 11) / 11 } as React.CSSProperties}>
-                <span className="w">{word}</span>{" "}
+                {/* Headers are set in capitals in the page itself, so the sand is cut from the same letters. */}
+                <span className="w">{heads[i] ? word.toUpperCase() : word}</span>{" "}
               </span>
             ))}
           </p>
