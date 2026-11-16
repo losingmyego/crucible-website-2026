@@ -20,7 +20,9 @@ import { Outline } from "./nave";
 export type EtchLook = {
   naveView: "drawn" | "etched"; // which cathedral: the drawn one, or this one
   etchSize: number; // height of the picture, in screen heights
-  etchDrop: number; // how far the picture sits below the window's centre, in screen heights
+  etchY: number; // vertical position: how far the picture's middle sits below the window's, in screen heights
+  etchX: number; // horizontal position, in screen widths
+  etchEye: number; // eye level: 0.5 as the picture is; higher shows more floor, lower more roof
   etchLines: number; // distance between engraved lines, in pixels
   etchWeight: number; // line weight
   etchBend: number; // contour flow: how much the lines bend round forms
@@ -38,7 +40,9 @@ export type EtchLook = {
 export const ETCH_LOOK: EtchLook = {
   naveView: "drawn",
   etchSize: 1.25,
-  etchDrop: 0.2,
+  etchY: 0.2,
+  etchX: 0,
+  etchEye: 0.5,
   etchLines: 3.2,
   etchWeight: 1,
   etchBend: 0.65,
@@ -67,6 +71,7 @@ uniform vec2 res;      // canvas size in device pixels
 uniform vec2 centre;   // where the board's centre sits, in device pixels from the top left
 uniform vec4 win;      // the window: centre and half size, in device pixels
 uniform float tall;    // picture height in device pixels
+uniform float eye;     // how much the floor is stretched and the roof squeezed, 1 = as the picture is
 uniform float px;      // device pixels per CSS pixel
 uniform float lines, weight, bend, cross_, detail, exposure, contrast, angle, stipple, wear, inkLight, clear;
 uniform vec3 ink;
@@ -91,7 +96,10 @@ float lineCoverage(float phase, float amount) {
 }
 void main() {
   vec2 q = vec2(gl_FragCoord.x, res.y - gl_FragCoord.y);
-  vec2 uv = MID + (q - centre) / vec2(tall * ASPECT, tall);
+  // Eye level: below the picture's horizon the floor is given more room, above it the roof less (or the reverse).
+  vec2 off = q - centre;
+  off.y /= off.y > 0.0 ? eye : 1.0 / eye;
+  vec2 uv = MID + off / vec2(tall * ASPECT, tall);
   if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) { outColor = vec4(0.0); return; }
   float original = texture(img, uv).r;
   float mean = texture(field, uv).r;
@@ -219,9 +227,10 @@ export default function Etched({ outline, look, ink, strength, top, size, scroll
       }
       const tallWin = size * H;
       const open = outline.ratio * tallWin;
-      const cx = W / 2 + outline.dx * tallWin;
+      const wx = W / 2 + outline.dx * tallWin; // the window's centre
+      const cx = wx + look.etchX * W;
       const wy = top * H + outline.sill * tallWin - open / 2; // the window's centre
-      const cy = wy + look.etchDrop * H; // the picture's middle sits lower, so there is floor to the bottom of the screen
+      const cy = wy + look.etchY * H;
       c.style.transformOrigin = `${(cx / W) * 100}% ${(cy / H) * 100}%`;
       gl.viewport(0, 0, W, H);
       gl.clearColor(0, 0, 0, 0);
@@ -229,11 +238,9 @@ export default function Etched({ outline, look, ink, strength, top, size, scroll
       gl.uniform1i(U("img"), 0);
       gl.uniform2f(U("res"), W, H);
       gl.uniform2f(U("centre"), cx, cy);
-      gl.uniform4f(U("win"), cx, wy, outline.hw * outline.ratio * tallWin * 1.15, open * 0.56);
-      // The picture is centred on the window, which sits high on the screen.
-      // It is never drawn so small that it stops short of an edge of the screen.
-      const cover = 1.06 * Math.max((H - cy) / (1 - BOARD.cy), cy / BOARD.cy, Math.max(cx, W - cx) / (0.5 * ASPECT));
-      gl.uniform1f(U("tall"), Math.max(look.etchSize * H, cover));
+      gl.uniform4f(U("win"), wx, wy, outline.hw * outline.ratio * tallWin * 1.15, open * 0.56);
+      gl.uniform1f(U("tall"), look.etchSize * H);
+      gl.uniform1f(U("eye"), Math.pow(2, (look.etchEye - 0.5) * 3));
       gl.uniform1f(U("px"), dpr);
       gl.uniform1i(U("field"), 1);
       gl.uniform1f(U("lines"), Math.max(0.8, look.etchLines));
