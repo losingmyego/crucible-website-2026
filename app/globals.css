@@ -1026,3 +1026,21 @@ html[data-timeline][data-panel] .panel-toggle {
   bottom: auto;
   top: 52px;
 }
+
+/* The settings panel sits above the timeline instead of running under it. */
+html[data-timeline][data-panel] .panel {
+  bottom: calc(var(--dock-h, 0px) + 24px);
+  max-height: calc(100vh - var(--dock-h, 0px) - 40px);
+}
+.panel .fold-body .actions {
+  margin: 8px 0 10px;
+}
+.panel .fold-body .head {
+  margin: 14px 0 8px;
+  opacity: 0.55;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.panel .fold-body .head:first-child {
+  margin-top: 4px;
+}

@@ -195,6 +195,21 @@ export function Versions({ current }: { current: string }) {
   );
 }
 
+// A section of a settings panel that folds open and closed, and remembers which.
+export function Fold({ id, title, open: openAtFirst = false, children }: { id: string; title: string; open?: boolean; children: React.ReactNode }) {
+  const [ui, setUi] = useStored<{ open: boolean }>(`crucible-site:fold:${id}`, { open: openAtFirst });
+  return (
+    <section className={`fold${ui.open ? " open" : ""}`}>
+      <div className="fold-head">
+        <button className="fold-title" aria-expanded={ui.open} onClick={() => setUi({ open: !ui.open })}>
+          <i>{ui.open ? "−" : "+"}</i> {title}
+        </button>
+      </div>
+      {ui.open && <div className="fold-body">{children}</div>}
+    </section>
+  );
+}
+
 // Settings that are remembered under `key`.
 export function useStored<T extends object>(key: string, defaults: T) {
   const [value, setValue] = useState<T>(defaults);

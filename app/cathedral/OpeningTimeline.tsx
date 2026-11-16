@@ -38,6 +38,25 @@ export default function OpeningTimeline({ go }: { go: boolean }) {
     return () => watch.disconnect();
   }, []);
 
+  // Tell the page how tall the dock is, so the settings panel can sit above it.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!panel) return;
+    let seen: ResizeObserver | null = null;
+    const find = window.setInterval(() => {
+      const dock = document.querySelector<HTMLElement>(".dialkit-timeline");
+      if (!dock) return;
+      window.clearInterval(find);
+      seen = new ResizeObserver(() => root.style.setProperty("--dock-h", `${Math.round(dock.getBoundingClientRect().height)}px`));
+      seen.observe(dock);
+    }, 100);
+    return () => {
+      window.clearInterval(find);
+      seen?.disconnect();
+      root.style.removeProperty("--dock-h");
+    };
+  }, [panel]);
+
   // Hand the playhead and the timings to the page, before it paints.
   useLayoutEffect(() => {
     const root = document.documentElement;

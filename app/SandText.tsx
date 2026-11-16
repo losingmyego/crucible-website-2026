@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SAND_FAR, SAVED_NOTE, ShareButton, THEMES, ThemeButtons, Versions, readSaved, useThemeColors, writeSaved, type ThemeName } from "./lab";
+import { Fold, SAND_FAR, SAVED_NOTE, ShareButton, THEMES, ThemeButtons, Versions, readSaved, useThemeColors, writeSaved, type ThemeName } from "./lab";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 
@@ -35,7 +35,9 @@ export type Variant = {
   href: string; // its entry in the version switcher
   defaults?: Partial<Settings>;
   backdrop?: React.ReactNode;
-  extra?: React.ReactNode;
+  extra?: React.ReactNode; // sections added at the top of the panel
+  scroll?: React.ReactNode; // added to the scroll section
+  reset?: React.ReactNode; // added beside the reset button
 };
 
 export type Settings = {
@@ -718,48 +720,60 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
       <div className="panel" data-lenis-prevent>
         <Versions current={variant?.href ?? "/"} />
         {variant?.extra}
-        {slider("start", "text starts at", 0.2, 0.95, 0.01)}
-        {slider("line", "sand starts at", 0.05, 0.9, 0.01)}
-        {slider("soft", "edge softness (px)", 0, 200, 5)}
-        {slider("launch", "lift-off speed", 0.1, 4, 0.05)}
-        {slider("settle", "lift-off length (s)", 0.02, 1.5, 0.02)}
-        {slider("rise", "rise speed", 0, 3, 0.05)}
-        {slider("back", "gather back (s)", 0, 2, 0.05)}
-        {slider("density", "sand density", 0.05, 1, 0.05)}
-        {slider("pull", "funnel pull", 0, 1, 0.05)}
-        {slider("stream", "constant stream", 0, 1, 0.05)}
-        {slider("glimmer", "glimmer", 0, 1, 0.05)}
-        {slider("grain", "grain size", 0.5, 2, 0.25)}
-        {slider("weight", "scroll friction", 0, 1, 0.05)}
-        {slider("speed", "scroll speed", 0.2, 1.5, 0.05)}
-        {swatch("paper", "background")}
-        {swatch("ink", "text")}
-        {variant && swatch("line", "lines (window and cathedral)")}
-        {swatch("far", "sand fades to")}
-<ThemeButtons current={themed.theme} onPick={themed.pick} />
-        <div className="actions">
-          <button onClick={download}>save file</button>
-          <label className="file">
-            load file
-            <input
-              type="file"
-              accept="application/json,.json"
-              onChange={(e) => {
-                upload(e.target.files?.[0]);
-                e.target.value = "";
+        <Fold id="sand" title="sand">
+          {slider("start", "text starts at", 0.2, 0.95, 0.01)}
+          {slider("line", "sand starts at", 0.05, 0.9, 0.01)}
+          {slider("soft", "edge softness (px)", 0, 200, 5)}
+          {slider("launch", "lift-off speed", 0.1, 4, 0.05)}
+          {slider("settle", "lift-off length (s)", 0.02, 1.5, 0.02)}
+          {slider("rise", "rise speed", 0, 3, 0.05)}
+          {slider("back", "gather back (s)", 0, 2, 0.05)}
+          {slider("density", "sand density", 0.05, 1, 0.05)}
+          {slider("pull", "funnel pull", 0, 1, 0.05)}
+          {slider("stream", "constant stream", 0, 1, 0.05)}
+          {slider("glimmer", "glimmer", 0, 1, 0.05)}
+          {slider("grain", "grain size", 0.5, 2, 0.25)}
+        </Fold>
+        <Fold id="scroll" title="scroll">
+          {slider("weight", "scroll friction", 0, 1, 0.05)}
+          {slider("speed", "scroll speed", 0.2, 1.5, 0.05)}
+          {variant?.scroll}
+        </Fold>
+        <Fold id="colour" title="colour" open>
+          <ThemeButtons current={themed.theme} onPick={themed.pick} />
+          {swatch("paper", "background")}
+          {swatch("ink", "text")}
+          {variant && swatch("line", "lines (window and cathedral)")}
+          {swatch("far", "sand fades to")}
+        </Fold>
+        <Fold id="save" title="save and share">
+          <div className="actions">
+            <button onClick={download}>save file</button>
+            <label className="file">
+              load file
+              <input
+                type="file"
+                accept="application/json,.json"
+                onChange={(e) => {
+                  upload(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            <ShareButton />
+          </div>
+          <div className="actions">
+            <button
+              onClick={() => {
+                setSettings(BASE);
+                themed.reset();
               }}
-            />
-          </label>
-          <button
-            onClick={() => {
-              setSettings(BASE);
-              themed.reset();
-            }}
-          >
-            reset
-          </button>
-          <ShareButton />
-        </div>
+            >
+              reset sand, scroll and colour
+            </button>
+            {variant?.reset}
+          </div>
+        </Fold>
         <p className="note">{SAVED_NOTE}</p>
       </div>
     </>

@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import SandText, { sandNeck } from "../SandText";
 import Rays from "../glass/Rays";
 import { SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
-import { isDark, readSaved, useStored, writeSaved } from "../lab";
+import { Fold, isDark, readSaved, useStored, writeSaved } from "../lab";
 import WindowCanvas from "../glass/WindowCanvas";
 import { GLASS_LOOK } from "../glass/look";
 import Nave from "../glass/Nave";
@@ -333,92 +333,96 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
     </label>
   );
   const extra = (
-    <div className="group">
-      <p className="head">window</p>
-      <p className="note">The window, its size and place, the cathedral and the light are set in the window tool.</p>
-      {slider("walk", "walk in on scroll", 0, 1, 0.05)}
-      {slider("scrim", "scrim behind the text (0 = off)", 0, 1, 0.01)}
-      {slider("scrimHeight", "scrim height", 0.1, 1, 0.01)}
-      <div className="actions">
-        {(["page", "dark", "custom"] as const).map((f) => (
-          <button key={f} className={look.scrimTone === f ? "on" : ""} onClick={() => set({ scrimTone: f })}>
-            {f === "page" ? "page colour" : f === "dark" ? "black" : "own colour"}
-          </button>
-        ))}
-      </div>
-      {look.scrimTone === "custom" && (
-        <label className="swatch">
-          <span>
-            scrim colour <b>{look.scrimColor}</b>
-          </span>
-          <input type="color" value={look.scrimColor} onChange={(e) => set({ scrimColor: e.target.value })} />
-        </label>
-      )}
-      <div className="actions">
-        {(["linear", "radial"] as const).map((f) => (
-          <button key={f} className={look.scrimShape === f ? "on" : ""} onClick={() => set({ scrimShape: f })}>
-            {f === "linear" ? "linear" : "radial (half circle)"}
-          </button>
-        ))}
-      </div>
-      {slider("scrimSolid", "gradient stop: full colour until", 0, 1, 0.01)}
-      {slider("scrimEnd", "gradient stop: faded out by", 0, 1, 0.01)}
-      {look.scrimShape === "radial" && slider("scrimWide", "half circle width", 0.3, 3, 0.01)}
-      {look.font === "asta" && slider("textWeight", "weight (asta sans)", 300, 800, 10)}
-      {look.font === "semplicita" && (
+    <>
+      <Fold id="home-type" title="type" open>
+        <p className="head">text</p>
+          <div className="actions">
+            {([["semplicita", "semplicita"], ["asta", "asta sans"], ["cantarell", "cantarell"], ["times", "times new roman"], ["sans", "sans"], ["mono", "mono"]] as const).map(([v, name]) => (
+              <button key={v} className={look.font === v ? "on" : ""} onClick={() => set({ font: v })}>
+                {name}
+              </button>
+            ))}
+          </div>
+        {look.font === "asta" && slider("textWeight", "weight", 300, 800, 10)}
+        {look.font === "semplicita" && (
+          <div className="actions">
+            {([[300, "light"], [400, "regular"], [500, "medium"], [700, "bold"]] as const).map(([v, name]) => (
+              <button key={v} className={look.brandWeight === v ? "on" : ""} onClick={() => set({ brandWeight: v })}>
+                {name}
+              </button>
+            ))}
+          </div>
+        )}
+        {slider("textSize", "size (px)", 10, 28, 0.5)}
+        {slider("textLine", "line height", 1, 2.4, 0.01)}
+        {slider("textTrack", "letter spacing", -5, 20, 0.1)}
+        {slider("textGap", "space between paragraphs", 0, 5, 0.05)}
+        {slider("textWidth", "column width (px)", 280, 900, 10)}
+          <div className="actions">
+            {([["left", "left"], ["center", "centred"], ["justified", "justified"]] as const).map(([v, name]) => (
+              <button key={v} className={look.align === v ? "on" : ""} onClick={() => set({ align: v })}>
+                {name}
+              </button>
+            ))}
+          </div>
+          <div className="actions">
+            {([["normal", "plain breaks"], ["tidy", "tidy breaks"], ["even", "even lines"]] as const).map(([v, name]) => (
+              <button key={v} className={look.wrap === v ? "on" : ""} onClick={() => set({ wrap: v })}>
+                {name}
+              </button>
+            ))}
+          </div>
+        <p className="head">nav and section headers</p>
+        {slider("navSize", "nav links size (px)", 9, 18, 0.5)}
+        {slider("headSize", "section header size (px)", 9, 18, 0.5)}
+        {slider("labelTrack", "letter spacing (px)", -1, 4, 0.1)}
+      </Fold>
+      <Fold id="home-scrim" title="scrim behind the text">
+        {slider("scrim", "strength (0 = off)", 0, 1, 0.01)}
+        {slider("scrimHeight", "height", 0.1, 1, 0.01)}
+          <div className="actions">
+            {([["page", "page colour"], ["dark", "black"], ["custom", "own colour"]] as const).map(([v, name]) => (
+              <button key={v} className={look.scrimTone === v ? "on" : ""} onClick={() => set({ scrimTone: v })}>
+                {name}
+              </button>
+            ))}
+          </div>
+        {look.scrimTone === "custom" && (
+          <label className="swatch">
+            <span>
+              scrim colour <b>{look.scrimColor}</b>
+            </span>
+            <input type="color" value={look.scrimColor} onChange={(e) => set({ scrimColor: e.target.value })} />
+          </label>
+        )}
+          <div className="actions">
+            {([["linear", "linear"], ["radial", "radial (half circle)"]] as const).map(([v, name]) => (
+              <button key={v} className={look.scrimShape === v ? "on" : ""} onClick={() => set({ scrimShape: v })}>
+                {name}
+              </button>
+            ))}
+          </div>
+        {slider("scrimSolid", "full colour until", 0, 1, 0.01)}
+        {slider("scrimEnd", "faded out by", 0, 1, 0.01)}
+        {look.scrimShape === "radial" && slider("scrimWide", "half circle width", 0.3, 3, 0.01)}
+      </Fold>
+      <Fold id="home-opening" title="opening">
+        <p className="note">Timings are on the timeline along the bottom. The window, the cathedral and the light are set in the window tool.</p>
         <div className="actions">
-          {([[300, "light"], [400, "regular"], [500, "medium"], [700, "bold"]] as const).map(([w, name]) => (
-            <button key={w} className={look.brandWeight === w ? "on" : ""} onClick={() => set({ brandWeight: w })}>
-              {name}
-            </button>
-          ))}
+          <button onClick={() => setReplay((n) => n + 1)}>replay load</button>
+          <button
+            onClick={() => {
+              window.scrollTo(0, 0);
+              setVeil(true);
+              setEntered(false);
+              setReplay((n) => n + 1);
+            }}
+          >
+            replay from enter
+          </button>
         </div>
-      )}
-      {slider("textSize", "text size (px)", 10, 28, 0.5)}
-      {slider("textLine", "line height", 1, 2.4, 0.01)}
-      {slider("textGap", "space between paragraphs", 0, 5, 0.05)}
-      {slider("textTrack", "letter spacing (kerning)", -5, 20, 0.1)}
-      {slider("navSize", "nav links size (px)", 9, 18, 0.5)}
-      {slider("headSize", "section header size (px)", 9, 18, 0.5)}
-      {slider("labelTrack", "nav and header letter spacing (px)", -1, 4, 0.1)}
-      {slider("textWidth", "text column width (px)", 280, 900, 10)}
-      <div className="actions">
-        {(["semplicita", "asta", "cantarell", "times", "sans", "mono"] as const).map((f) => (
-          <button key={f} className={look.font === f ? "on" : ""} onClick={() => set({ font: f })}>
-            {f === "times" ? "times new roman" : f === "asta" ? "asta sans" : f}
-          </button>
-        ))}
-      </div>
-      <div className="actions">
-        {(["left", "center", "justified"] as const).map((f) => (
-          <button key={f} className={look.align === f ? "on" : ""} onClick={() => set({ align: f })}>
-            {f === "center" ? "centred" : f}
-          </button>
-        ))}
-      </div>
-      <div className="actions">
-        {(["normal", "tidy", "even"] as const).map((f) => (
-          <button key={f} className={look.wrap === f ? "on" : ""} onClick={() => set({ wrap: f })}>
-            {f === "tidy" ? "tidy breaks" : f === "even" ? "even lines" : "plain breaks"}
-          </button>
-        ))}
-      </div>
-      <div className="actions">
-        <button onClick={() => setReplay((n) => n + 1)}>replay load</button>
-        <button
-          onClick={() => {
-            window.scrollTo(0, 0);
-            setVeil(true);
-            setEntered(false);
-            setReplay((n) => n + 1);
-          }}
-        >
-          replay from enter
-        </button>
-        <button onClick={() => setLook(LOOK)}>reset look</button>
-      </div>
-      <p className="head">dust</p>
-    </div>
+      </Fold>
+    </>
   );
 
   return (
@@ -440,6 +444,8 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
           href: "/",
           backdrop: entered ? <Backdrop key={replay} look={look} replay={replay} /> : null,
           extra,
+          scroll: slider("walk", "walk in on scroll", 0, 1, 0.05),
+          reset: <button onClick={() => setLook(LOOK)}>reset type, scrim and walk</button>,
         }}
       />
     </>
