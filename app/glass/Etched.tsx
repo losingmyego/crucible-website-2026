@@ -133,9 +133,13 @@ const rgbOf = (hex: string): [number, number, number] => {
 
 export default function Etched({ outline, look, ink, strength, top, size, scroll = 0, play = 0 }: { outline: Outline | null; look: EtchLook; ink: string; strength: number; top: number; size: number; scroll?: number; play?: number }) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  // Settings are read from here on every frame, so changing one only redraws:
+  // the drawing surface is set up once and kept.
+  const live = useRef({ outline, look, ink, strength, top, size, scroll, stamp: 0 });
+  live.current = { outline, look, ink, strength, top, size, scroll, stamp: live.current.stamp + 1 };
   useEffect(() => {
     const c = canvas.current;
-    if (!c || !outline) return;
+    if (!c) return;
     const gl = c.getContext("webgl2", { premultipliedAlpha: true, antialias: false });
     if (!gl) return;
     const shader = (type: number, src: string) => {
@@ -192,13 +196,15 @@ export default function Etched({ outline, look, ink, strength, top, size, scroll
     // size. Walking in on scroll is a plain zoom of the finished picture.
     const frame = () => {
       raf = requestAnimationFrame(frame);
+      const { outline, look, ink, strength, top, size, scroll, stamp } = live.current;
+      if (!outline) return;
       const zoom = 1 + (still ? 0 : Math.min(1.2, window.scrollY / window.innerHeight) * scroll * 0.08);
       c.style.transform = `scale(${zoom.toFixed(4)})`;
       if (!ready) return;
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       const W = Math.round(window.innerWidth * dpr);
       const H = Math.round(window.innerHeight * dpr);
-      const key = `${W}:${H}`;
+      const key = `${W}:${H}:${stamp}`;
       if (key === last) return;
       last = key;
       if (c.width !== W || c.height !== H) {
@@ -239,9 +245,8 @@ export default function Etched({ outline, look, ink, strength, top, size, scroll
     return () => {
       off = true;
       cancelAnimationFrame(raf);
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, [outline, look, ink, strength, top, size, scroll, play]);
+  }, []);
   return (
     <div className="nave-rise" data-play={play}>
       <canvas ref={canvas} className="nave etched" />

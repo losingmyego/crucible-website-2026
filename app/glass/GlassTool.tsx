@@ -153,7 +153,7 @@ export default function GlassTool() {
       </section>
     );
   };
-  const all = (open: boolean) => setUi({ ...ui, open: Object.fromEntries(["drawing", "stone", "symbol", "leading", "echo", "line", "light", "rays", "page", "nave", "space", "detail", "machine", "hand"].map((k) => [k, open])) });
+  const all = (open: boolean) => setUi({ ...ui, open: Object.fromEntries(["drawing", "stone", "symbol", "leading", "echo", "line", "light", "rays", "page", "nave", "etch", "space", "detail", "machine", "hand"].map((k) => [k, open])) });
   const dark = look.theme !== "light";
 
   return (
