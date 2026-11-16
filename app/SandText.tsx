@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SAND_FAR, SAVED_NOTE, ShareButton, THEMES, ThemeButtons, Versions, readSaved, useThemeColors, writeSaved, type ThemeName } from "./lab";
+import { Fold, SAND_FAR, SAVED_NOTE, ShareButton, THEMES, ThemeButtons, Versions, readSaved, useThemeColors, writeSaved, type ThemeName } from "./lab";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 
@@ -35,7 +35,9 @@ export type Variant = {
   href: string; // its entry in the version switcher
   defaults?: Partial<Settings>;
   backdrop?: React.ReactNode;
-  extra?: React.ReactNode;
+  extra?: React.ReactNode; // sections added at the top of the panel
+  scroll?: React.ReactNode; // added to the scroll section
+  reset?: React.ReactNode; // added beside the reset button
 };
 
 export type Settings = {
@@ -65,7 +67,7 @@ type Colors = { paper: string; ink: string; far: string; line: string };
 const COLOR_DEFAULTS: Colors = { paper: "#6e6a66", ink: "#f6f6f4", far: "#e8e8e3", line: "#cecec0" };
 // Starting colours for each theme: Neesh's picks on the hero as of 2026-11-16.
 // The dust fades toward `far`. `line` colours the window and the cathedral.
-const BASE_COLORS: Record<ThemeName, Colors> = {
+export const BASE_COLORS: Record<ThemeName, Colors> = {
   light: { paper: THEMES.light.paper, ink: THEMES.light.ink, far: "#e8e8e3", line: THEMES.light.ink },
   medium: COLOR_DEFAULTS,
   dark: { paper: THEMES.dark.paper, ink: "#a6a299", far: "#1a1a17", line: "#a6a299" },
@@ -199,15 +201,30 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
       colLeft = cr.left + sx;
       colWidth = cr.width;
       const els = column.querySelectorAll<HTMLElement>(".w");
+      const shiftOf = (el: Element) => {
+        const t = getComputedStyle(el).transform;
+        return t && t !== "none" ? new DOMMatrixReadOnly(t).m42 : 0;
+      };
+      const lift = shiftOf(column);
       const prev = words;
       const range = document.createRange();
       words = Array.from(els, (el, i) => {
         const img = el instanceof HTMLImageElement ? el : null;
         const text = (el.textContent ?? "").replace(/\u00ad/g, "");
-        const rects = img ? [el.getBoundingClientRect()] : Array.from(el.getClientRects()).filter((r) => r.width > 0);
-        const box = (r: DOMRect, t: string): Part => ({ text: t, img, x: r.left + sx, y: r.top + sy, w: r.width, h: r.height });
-        let parts: Part[];
         const node = el.firstChild;
+        // Measure the letters themselves, not the word's box: a word set as a
+        // block has a box as tall as the line, which would put the sand a few
+        // pixels above the letters it replaces.
+        let rects: DOMRect[];
+        if (img) rects = [el.getBoundingClientRect()];
+        else if (node && node.nodeType === Node.TEXT_NODE) {
+          range.selectNodeContents(node);
+          rects = Array.from(range.getClientRects()).filter((r) => r.width > 0);
+        } else rects = Array.from(el.getClientRects()).filter((r) => r.width > 0);
+        // While the opening is still moving the column or this word, measure where it will come to rest.
+        const dy = lift + shiftOf(el);
+        const box = (r: DOMRect, t: string): Part => ({ text: t, img, x: r.left + sx, y: r.top + sy - dy, w: r.width, h: r.height });
+        let parts: Part[];
         if (rects.length === 2 && node && node.nodeType === Node.TEXT_NODE) {
           // Hyphenated across two lines: find the letter where line two begins.
           const raw = node.textContent ?? "";
@@ -687,9 +704,10 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
         {paragraphs.map((p, i) => (
           <p key={i} className={heads[i] ? "head" : undefined}>
             {p.split(" ").map((word, j) => (
-              // --i counts words down the page, for pages that bring the text in word by word.
-              <span key={j} style={{ "--i": Math.min(200, starts[i] + j) } as React.CSSProperties}>
-                <span className="w">{word}</span>{" "}
+              // --i counts words down the page and --j is a little scatter, for bringing the text in word by word.
+              <span key={j} style={{ "--i": Math.min(200, starts[i] + j), "--j": (((starts[i] + j) * 37) % 11) / 11 } as React.CSSProperties}>
+                {/* Headers are set in capitals in the page itself, so the sand is cut from the same letters. */}
+                <span className="w">{heads[i] ? word.toUpperCase() : word}</span>{" "}
               </span>
             ))}
           </p>
@@ -702,48 +720,60 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
       <div className="panel" data-lenis-prevent>
         <Versions current={variant?.href ?? "/"} />
         {variant?.extra}
-        {slider("start", "text starts at", 0.2, 0.95, 0.01)}
-        {slider("line", "sand starts at", 0.05, 0.9, 0.01)}
-        {slider("soft", "edge softness (px)", 0, 200, 5)}
-        {slider("launch", "lift-off speed", 0.1, 4, 0.05)}
-        {slider("settle", "lift-off length (s)", 0.02, 1.5, 0.02)}
-        {slider("rise", "rise speed", 0, 3, 0.05)}
-        {slider("back", "gather back (s)", 0, 2, 0.05)}
-        {slider("density", "sand density", 0.05, 1, 0.05)}
-        {slider("pull", "funnel pull", 0, 1, 0.05)}
-        {slider("stream", "constant stream", 0, 1, 0.05)}
-        {slider("glimmer", "glimmer", 0, 1, 0.05)}
-        {slider("grain", "grain size", 0.5, 2, 0.25)}
-        {slider("weight", "scroll friction", 0, 1, 0.05)}
-        {slider("speed", "scroll speed", 0.2, 1.5, 0.05)}
-        {swatch("paper", "background")}
-        {swatch("ink", "text")}
-        {variant && swatch("line", "lines (window and cathedral)")}
-        {swatch("far", "sand fades to")}
-<ThemeButtons current={themed.theme} onPick={themed.pick} />
-        <div className="actions">
-          <button onClick={download}>save file</button>
-          <label className="file">
-            load file
-            <input
-              type="file"
-              accept="application/json,.json"
-              onChange={(e) => {
-                upload(e.target.files?.[0]);
-                e.target.value = "";
+        <Fold id="sand" title="sand">
+          {slider("start", "text starts at", 0.2, 0.95, 0.01)}
+          {slider("line", "sand starts at", 0.05, 0.9, 0.01)}
+          {slider("soft", "edge softness (px)", 0, 200, 5)}
+          {slider("launch", "lift-off speed", 0.1, 4, 0.05)}
+          {slider("settle", "lift-off length (s)", 0.02, 1.5, 0.02)}
+          {slider("rise", "rise speed", 0, 3, 0.05)}
+          {slider("back", "gather back (s)", 0, 2, 0.05)}
+          {slider("density", "sand density", 0.05, 1, 0.05)}
+          {slider("pull", "funnel pull", 0, 1, 0.05)}
+          {slider("stream", "constant stream", 0, 1, 0.05)}
+          {slider("glimmer", "glimmer", 0, 1, 0.05)}
+          {slider("grain", "grain size", 0.5, 2, 0.25)}
+        </Fold>
+        <Fold id="scroll" title="scroll">
+          {slider("weight", "scroll friction", 0, 1, 0.05)}
+          {slider("speed", "scroll speed", 0.2, 1.5, 0.05)}
+          {variant?.scroll}
+        </Fold>
+        <Fold id="colour" title="colour" open>
+          <ThemeButtons current={themed.theme} onPick={themed.pick} />
+          {swatch("paper", "background")}
+          {swatch("ink", "text")}
+          {variant && swatch("line", "lines (window and cathedral)")}
+          {swatch("far", "sand fades to")}
+        </Fold>
+        <Fold id="save" title="save and share">
+          <div className="actions">
+            <button onClick={download}>save file</button>
+            <label className="file">
+              load file
+              <input
+                type="file"
+                accept="application/json,.json"
+                onChange={(e) => {
+                  upload(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            <ShareButton />
+          </div>
+          <div className="actions">
+            <button
+              onClick={() => {
+                setSettings(BASE);
+                themed.reset();
               }}
-            />
-          </label>
-          <button
-            onClick={() => {
-              setSettings(BASE);
-              themed.reset();
-            }}
-          >
-            reset
-          </button>
-          <ShareButton />
-        </div>
+            >
+              reset sand, scroll and colour
+            </button>
+            {variant?.reset}
+          </div>
+        </Fold>
         <p className="note">{SAVED_NOTE}</p>
       </div>
     </>

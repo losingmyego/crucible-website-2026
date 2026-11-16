@@ -1,12 +1,17 @@
 "use client";
 
+import SiteNav from "../site/SiteNav";
+import OpeningTimeline from "./OpeningTimeline";
+
 import { useEffect, useRef, useState } from "react";
 import SandText, { sandNeck } from "../SandText";
 import Rays from "../glass/Rays";
-import { isDark, useStored } from "../lab";
+import { SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
+import { Fold, SKIP_GATE, isDark, readSaved, useStored, writeSaved } from "../lab";
 import WindowCanvas from "../glass/WindowCanvas";
 import { GLASS_LOOK } from "../glass/look";
 import Nave from "../glass/Nave";
+import Etched from "../glass/Etched";
 import { outlineOf, Outline } from "../glass/nave";
 
 /**
@@ -23,35 +28,73 @@ import { outlineOf, Outline } from "../glass/nave";
 
 type Look = {
   walk: number; // how far the cathedral comes toward you as you scroll
-  align: "left" | "justified"; // how the lines of text are set
-  font: "sans" | "mono"; // the text face. Sans is a system face, a stand-in only.
+  align: "left" | "center" | "justified"; // how the lines of text are set
+  font: "semplicita" | "asta" | "cantarell" | "times" | "sans" | "mono"; // the text face. Asta Sans and Cantarell are served with the site; Times and sans are system faces.
+  wrap: "normal" | "tidy" | "even"; // how lines break: as they fall, avoiding short last lines, or all lines near the same length
+  textWeight: number; // Asta Sans only: its weight, 300 to 800
+  brandWeight: number; // Semplicita only: 300 light, 400 regular, 500 medium, 700 bold
   textSize: number; // in pixels
+  textLine: number; // line height, as a multiple of the text size
+  textGap: number; // space between paragraphs, as a multiple of the text size
+  navSize: number; // the header links, in px
+  headSize: number; // section headers in the text, in px
+  labelTrack: number; // letter spacing of both, in px
+  textTrack: number; // letter spacing, in hundredths of the text size (0 = as the face is drawn)
   open: number; // length of the opening: 1 is the set pace, 2 twice as long
   scrim: number; // strength of the shade rising from the bottom of the screen, behind the text
   scrimHeight: number; // how far up the screen it reaches
-  scrimTone: "page" | "dark"; // the page colour, or black
+  scrimTone: "page" | "dark" | "custom"; // the page colour, black, or a colour of its own
+  scrimColor: string; // the colour used when the tone is custom
+  scrimShape: "linear" | "radial"; // a band rising from the bottom, or a half circle sitting on the bottom edge
+  scrimSolid: number; // gradient stop: how far the full colour holds, 0 to 1
+  scrimEnd: number; // gradient stop: where it has faded to nothing, 0 to 1
+  scrimWide: number; // half circle only: its width, in screen widths
   textWidth: number; // width of the column of text, in pixels
 };
 
 // Neesh's settings as of 2026-11-16.
-const LOOK: Look = { walk: 0.5, font: "sans", align: "left", open: 1.2, textSize: 15, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page" };
+const LOOK: Look = { walk: 0.5, font: "asta", textWeight: 350, brandWeight: 400, align: "left", wrap: "tidy", open: 1.2, textSize: 15, textLine: 1.6, textGap: 1.8, textTrack: 0, navSize: 12, headSize: 13, labelTrack: 0.5, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page", scrimColor: "#2a1c15", scrimShape: "linear", scrimSolid: 0.25, scrimEnd: 1, scrimWide: 1.2 };
 const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+const SEMPLICITA = '"Semplicita Pro", "Helvetica Neue", Arial, sans-serif'; // the brand face, served from public/fonts
+const ASTA = '"Asta Sans Variable", "Helvetica Neue", Arial, sans-serif';
+const CANTARELL = 'Cantarell, "Helvetica Neue", Arial, sans-serif';
+const TIMES = '"Times New Roman", Times, serif';
 
 // A soft drone with slow voices, made in the browser. A stand-in for a real
 // recording of chant, which would replace it.
+// The sound starts with the page. A browser will not let a page make sound
+// until the visitor has clicked, tapped or pressed a key, so it waits for the
+// first of those and then fades in. Turning it off is remembered.
+const SOUND_KEY = "crucible-site:sound";
 function useChant() {
   const [on, setOn] = useState(false);
   const stop = useRef<(() => void) | null>(null);
   useEffect(() => () => stop.current?.(), []);
+  // Called from the visitor's press on "enter", which is what lets a browser play sound.
+  const begin = () => {
+    if (!readSaved<{ off?: boolean }>(SOUND_KEY)?.off) start();
+  };
   const toggle = () => {
     if (on) {
       stop.current?.();
       stop.current = null;
       setOn(false);
+      writeSaved(SOUND_KEY, { off: true });
       return;
     }
+    writeSaved(SOUND_KEY, { off: false });
+    start();
+  };
+  const start = () => {
+    if (stop.current) return;
     const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ac = new AC();
+    const wake = () => {
+      if (ac.state === "suspended") ac.resume();
+    };
+    const gestures = ["pointerdown", "keydown", "touchstart"] as const;
+    gestures.forEach((g) => window.addEventListener(g, wake, { passive: true }));
+    wake();
     const master = ac.createGain();
     master.gain.value = 0;
     master.gain.linearRampToValueAtTime(0.22, ac.currentTime + 4);
@@ -112,6 +155,7 @@ function useChant() {
     };
     const ends = [voice(73.42, 0.5, false), voice(146.83, 0.45, false), voice(220.0, 0.3, true), voice(174.61, 0.22, true)];
     stop.current = () => {
+      gestures.forEach((g) => window.removeEventListener(g, wake));
       timers.forEach(clearTimeout);
       master.gain.cancelScheduledValues(ac.currentTime);
       master.gain.setTargetAtTime(0, ac.currentTime, 0.4);
@@ -122,7 +166,7 @@ function useChant() {
     };
     setOn(true);
   };
-  return { on, toggle };
+  return { on, toggle, begin };
 }
 
 function Backdrop({ look, replay }: { look: Look; replay: number }) {
@@ -192,49 +236,105 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
       className={`cathedral opening${go ? " go" : ""}${dark ? " dark" : ""}`}
       aria-hidden
       ref={ref}
-      style={{ "--win-top": `${glass.top * 100}vh`, "--win-h": `${glass.size * 100}vh`, "--faint": glass.cathedral, "--light": glass.light, "--walk-by": look.walk, "--o": look.open } as React.CSSProperties}
+      style={{ "--win-top": `${glass.top * 100}vh`, "--win-h": `${glass.size * 100}vh`, "--faint": glass.cathedral, "--light": glass.light, "--walk-by": look.walk } as React.CSSProperties}
     >
-      {glass.cathedral > 0 && <Nave outline={outline} look={glass} ink={line} strength={glass.cathedral} top={glass.top} size={glass.size} walk={glass.walk} scroll={glass.walkScroll} play={1} />}
+      <OpeningTimeline go={go} />
+      {glass.cathedral > 0 && glass.naveView !== "etched" && <Nave outline={outline} look={glass} ink={line} strength={glass.cathedral} top={glass.top} size={glass.size} walk={glass.walk} scroll={glass.walkScroll} play={1} />}
+      {glass.cathedral > 0 && glass.naveView === "etched" && <Etched outline={outline} look={glass} ink={line} strength={glass.cathedral} top={glass.top} size={glass.size} scroll={glass.walkScroll} play={1} />}
       <div className="beam" />
-      {(glass.rays > 0 || glass.rayShade > 0) && <Rays outline={outline} look={glass} ink={ink} top={glass.top} size={glass.size} dark={dark} />}
+      {(glass.rays > 0 || glass.rayShade > 0) && <Rays outline={outline} look={glass} ink={ink} top={glass.top} size={glass.size} dark={dark} intro={go ? 1 : 0} />}
       {look.scrim > 0 && (
         <div
           className="scrim"
           style={{
             height: `${look.scrimHeight * 100}vh`,
             opacity: look.scrim,
-            background: `linear-gradient(to top, ${look.scrimTone === "dark" ? "#000" : paper} 0%, ${look.scrimTone === "dark" ? "#000" : paper} 25%, transparent 100%)`,
+            background: scrimPaint(look, paper),
           }}
         />
       )}
-      <WindowCanvas ink={line} paper={paper} className="win-canvas" play={1} seconds={2.2 * look.open} onLook={setGlass} onLayers={(L) => setOutline(outlineOf(L))} />
+      <WindowCanvas ink={line} paper={paper} className="win-canvas" play={1} onLook={setGlass} onLayers={(L) => setOutline(outlineOf(L))} />
     </div>
   );
+}
+
+// The scrim's gradient. Linear: a band rising from the bottom edge. Radial: a
+// half circle sitting on the bottom edge, like a sun going down.
+function scrimPaint(look: Look, paper: string) {
+  const c = look.scrimTone === "dark" ? "#000" : look.scrimTone === "custom" ? look.scrimColor : paper;
+  const a = Math.min(look.scrimSolid, look.scrimEnd) * 100;
+  const b = Math.max(look.scrimSolid, look.scrimEnd) * 100;
+  const stops = `${c} 0%, ${c} ${a}%, color-mix(in srgb, ${c} 0%, transparent) ${b}%`;
+  return look.scrimShape === "radial" ? `radial-gradient(ellipse ${look.scrimWide * 50}vw 100% at 50% 100%, ${stops})` : `linear-gradient(to top, ${stops})`;
 }
 
 export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) {
   const [look, setLook] = useStored<Look>("crucible-site:home-look", LOOK);
   const [replay, setReplay] = useState(0);
   const chant = useChant();
+  // The enter moment: a veil with the lockup. Nothing opens, and no sound plays, until it is pressed.
+  const [entered, setEntered] = useState(false);
+  const [veil, setVeil] = useState(true); // kept on the page while it fades away
+  const enter = () => {
+    if (entered) return;
+    chant.begin();
+    setEntered(true);
+    setTimeout(() => setVeil(false), 2200);
+  };
+  // After swapping options the page comes back already entered.
+  useEffect(() => {
+    try {
+      if (!sessionStorage.getItem(SKIP_GATE)) return;
+      sessionStorage.removeItem(SKIP_GATE);
+    } catch {
+      return;
+    }
+    setEntered(true);
+    setVeil(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    document.documentElement.toggleAttribute("data-gate", !entered);
+    return () => document.documentElement.removeAttribute("data-gate");
+  }, [entered]);
   const set = (patch: Partial<Look>) => setLook({ ...look, ...patch });
 
   // The text face is set on the document so the sand is cut from the same letters.
   useEffect(() => {
     const root = document.documentElement;
     if (look.font === "sans") root.style.setProperty("--text-font", SANS);
+    else if (look.font === "semplicita") root.style.setProperty("--text-font", SEMPLICITA);
+    else if (look.font === "asta") root.style.setProperty("--text-font", ASTA);
+    else if (look.font === "cantarell") root.style.setProperty("--text-font", CANTARELL);
+    else if (look.font === "times") root.style.setProperty("--text-font", TIMES);
     else root.style.removeProperty("--text-font");
     // Justified text in the sans face keeps its normal word spaces; the mono face is tightened a little.
-    root.style.setProperty("--text-align", look.align === "left" ? "left" : "justify");
+    root.style.setProperty("--text-align", look.align === "justified" ? "justify" : look.align === "center" ? "center" : "left");
+    root.style.setProperty("--text-wrap", look.wrap === "tidy" ? "pretty" : look.wrap === "even" ? "balance" : "wrap");
+    root.style.setProperty("--text-last", look.align === "center" ? "center" : "left");
     root.style.setProperty("--text-hyphens", "none"); // words are never broken across lines here
     root.style.setProperty("--text-word", "nowrap");
     root.style.setProperty("--text-space", look.align === "justified" && look.font === "mono" ? "-0.18em" : "0em");
-    root.style.setProperty("--o", String(look.open));
+    if (look.font === "asta") root.style.setProperty("--text-weight", String(look.textWeight));
+    else if (look.font === "semplicita") root.style.setProperty("--text-weight", String(look.brandWeight));
+    else root.style.removeProperty("--text-weight");
     root.style.setProperty("--text-size", `${look.textSize}px`);
+    root.style.setProperty("--text-line", String(look.textLine));
+    root.style.setProperty("--text-gap", `${look.textGap}em`);
+    root.style.setProperty("--text-track", `${look.textTrack / 100}em`);
+    root.style.setProperty("--nav-size", `${look.navSize}px`);
+    root.style.setProperty("--head-size", `${look.headSize}px`);
+    root.style.setProperty("--label-track", `${look.labelTrack}px`);
+    // The dust measures where the words sit, so tell it they have moved.
+    const moved = setTimeout(() => window.dispatchEvent(new Event("resize")), 60);
+    // A served face can arrive a moment later and shift the lines.
+    document.fonts?.ready.then(() => window.dispatchEvent(new Event("resize")));
     root.style.setProperty("--text-width", `${look.textWidth}px`);
     return () => {
-      for (const k of ["--text-font", "--text-size", "--text-width", "--text-align", "--text-hyphens", "--text-word", "--text-space", "--o"]) root.style.removeProperty(k);
+      clearTimeout(moved);
+      for (const k of ["--text-wrap", "--text-last", "--text-font", "--text-size", "--text-weight", "--text-line", "--text-gap", "--text-track", "--text-width", "--text-align", "--text-hyphens", "--text-word", "--text-space", "--o"]) root.style.removeProperty(k);
     };
-  }, [look.font, look.align, look.textSize, look.textWidth, look.open]);
+  }, [look.wrap, look.font, look.textWeight, look.brandWeight, look.align, look.textSize, look.textLine, look.textGap, look.textTrack, look.navSize, look.headSize, look.labelTrack, look.textWidth]);
 
   const slider = (key: keyof Look, label: string, min: number, max: number, step: number) => (
     <label>
@@ -245,64 +345,119 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
     </label>
   );
   const extra = (
-    <div className="group">
-      <p className="head">window</p>
-      <p className="note">The window, its size and place, the cathedral and the light are set in the window tool.</p>
-      {slider("walk", "walk in on scroll", 0, 1, 0.05)}
-      {slider("open", "opening length (1 = set pace)", 0.4, 2.5, 0.05)}
-      {slider("scrim", "scrim behind the text (0 = off)", 0, 1, 0.01)}
-      {slider("scrimHeight", "scrim height", 0.1, 1, 0.01)}
-      <div className="actions">
-        {(["page", "dark"] as const).map((f) => (
-          <button key={f} className={look.scrimTone === f ? "on" : ""} onClick={() => set({ scrimTone: f })}>
-            {f === "page" ? "scrim: page colour" : "scrim: darker"}
+    <>
+      <Fold id="home-type" title="type" open>
+        <p className="head">text</p>
+          <div className="actions">
+            {([["semplicita", "semplicita"], ["asta", "asta sans"], ["cantarell", "cantarell"], ["times", "times new roman"], ["sans", "sans"], ["mono", "mono"]] as const).map(([v, name]) => (
+              <button key={v} className={look.font === v ? "on" : ""} onClick={() => set({ font: v })}>
+                {name}
+              </button>
+            ))}
+          </div>
+        {look.font === "asta" && slider("textWeight", "weight", 300, 800, 10)}
+        {look.font === "semplicita" && (
+          <div className="actions">
+            {([[300, "light"], [400, "regular"], [500, "medium"], [700, "bold"]] as const).map(([v, name]) => (
+              <button key={v} className={look.brandWeight === v ? "on" : ""} onClick={() => set({ brandWeight: v })}>
+                {name}
+              </button>
+            ))}
+          </div>
+        )}
+        {slider("textSize", "size (px)", 10, 28, 0.5)}
+        {slider("textLine", "line height", 1, 2.4, 0.01)}
+        {slider("textTrack", "letter spacing", -5, 20, 0.1)}
+        {slider("textGap", "space between paragraphs", 0, 5, 0.05)}
+        {slider("textWidth", "column width (px)", 280, 900, 10)}
+          <div className="actions">
+            {([["left", "left"], ["center", "centred"], ["justified", "justified"]] as const).map(([v, name]) => (
+              <button key={v} className={look.align === v ? "on" : ""} onClick={() => set({ align: v })}>
+                {name}
+              </button>
+            ))}
+          </div>
+          <div className="actions">
+            {([["normal", "plain breaks"], ["tidy", "tidy breaks"], ["even", "even lines"]] as const).map(([v, name]) => (
+              <button key={v} className={look.wrap === v ? "on" : ""} onClick={() => set({ wrap: v })}>
+                {name}
+              </button>
+            ))}
+          </div>
+        <p className="head">nav and section headers</p>
+        {slider("navSize", "nav links size (px)", 9, 18, 0.5)}
+        {slider("headSize", "section header size (px)", 9, 18, 0.5)}
+        {slider("labelTrack", "letter spacing (px)", -1, 4, 0.1)}
+      </Fold>
+      <Fold id="home-scrim" title="scrim behind the text">
+        {slider("scrim", "strength (0 = off)", 0, 1, 0.01)}
+        {slider("scrimHeight", "height", 0.1, 1, 0.01)}
+          <div className="actions">
+            {([["page", "page colour"], ["dark", "black"], ["custom", "own colour"]] as const).map(([v, name]) => (
+              <button key={v} className={look.scrimTone === v ? "on" : ""} onClick={() => set({ scrimTone: v })}>
+                {name}
+              </button>
+            ))}
+          </div>
+        {look.scrimTone === "custom" && (
+          <label className="swatch">
+            <span>
+              scrim colour <b>{look.scrimColor}</b>
+            </span>
+            <input type="color" value={look.scrimColor} onChange={(e) => set({ scrimColor: e.target.value })} />
+          </label>
+        )}
+          <div className="actions">
+            {([["linear", "linear"], ["radial", "radial (half circle)"]] as const).map(([v, name]) => (
+              <button key={v} className={look.scrimShape === v ? "on" : ""} onClick={() => set({ scrimShape: v })}>
+                {name}
+              </button>
+            ))}
+          </div>
+        {slider("scrimSolid", "full colour until", 0, 1, 0.01)}
+        {slider("scrimEnd", "faded out by", 0, 1, 0.01)}
+        {look.scrimShape === "radial" && slider("scrimWide", "half circle width", 0.3, 3, 0.01)}
+      </Fold>
+      <Fold id="home-opening" title="opening">
+        <p className="note">Timings are on the timeline along the bottom. The window, the cathedral and the light are set in the window tool.</p>
+        <div className="actions">
+          <button onClick={() => setReplay((n) => n + 1)}>replay load</button>
+          <button
+            onClick={() => {
+              window.scrollTo(0, 0);
+              setVeil(true);
+              setEntered(false);
+              setReplay((n) => n + 1);
+            }}
+          >
+            replay from enter
           </button>
-        ))}
-      </div>
-      {slider("textSize", "text size (px)", 10, 28, 0.5)}
-      {slider("textWidth", "text column width (px)", 280, 900, 10)}
-      <div className="actions">
-        {(["sans", "mono"] as const).map((f) => (
-          <button key={f} className={look.font === f ? "on" : ""} onClick={() => set({ font: f })}>
-            {f} text
-          </button>
-        ))}
-      </div>
-      <div className="actions">
-        {(["left", "justified"] as const).map((f) => (
-          <button key={f} className={look.align === f ? "on" : ""} onClick={() => set({ align: f })}>
-            {f}
-          </button>
-        ))}
-      </div>
-      <div className="actions">
-        <button onClick={() => setReplay((n) => n + 1)}>replay load</button>
-        <button onClick={() => setLook(LOOK)}>reset look</button>
-      </div>
-      <p className="head">dust</p>
-    </div>
+        </div>
+      </Fold>
+    </>
   );
 
   return (
     <>
-      <header className="cathedral-bar">
-        {/* Placeholder labels only, to show a header can sit over the hero. */}
-        <nav>
-          <span>Portfolio</span>
-          <span>Research</span>
-          <span>Team</span>
-        </nav>
-        <button onClick={chant.toggle} aria-pressed={chant.on}>
-          Sound {chant.on ? "on" : "off"}
+      <SiteNav />
+      {veil && (
+        <button className={`gate${entered ? " leaving" : ""}`} onClick={enter} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()} aria-label="Enter Crucible" autoFocus>
+          <span className="gate-mark" role="img" aria-label="Crucible" />
+          <span className="gate-enter">Enter</span>
         </button>
-      </header>
+      )}
+      <button className="sound" onClick={chant.toggle} aria-pressed={chant.on} aria-label={chant.on ? "Turn sound off" : "Turn sound on"}>
+        {chant.on ? <SpeakerHigh size={18} /> : <SpeakerSlash size={18} />}
+      </button>
       <SandText
         paragraphs={paragraphs}
         variant={{
           name: "home",
           href: "/",
-          backdrop: <Backdrop key={replay} look={look} replay={replay} />,
+          backdrop: entered ? <Backdrop key={replay} look={look} replay={replay} /> : null,
           extra,
+          scroll: slider("walk", "walk in on scroll", 0, 1, 0.05),
+          reset: <button onClick={() => setLook(LOOK)}>reset type, scrim and walk</button>,
         }}
       />
     </>

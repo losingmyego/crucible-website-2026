@@ -191,13 +191,21 @@ export function drawNave(g: CanvasRenderingContext2D, O: Outline, S: NaveLook, s
     tone = on ? S.mTone : 1;
     heavy = on ? S.mWeight : 1;
   };
-  const sketch = (key: number, alpha: number, widthPx: number, shown = 1) => {
+  // While the cathedral is being sketched in, `pen` is how far the pen has got
+  // through the bay being drawn, and `back` says its lines are drawn from their
+  // near end toward the window. Each line starts a little after the last.
+  let pen = 1;
+  let back = false;
+  const sketch = (key: number, alpha: number, widthPx: number, shown = pen) => {
     const n = pts.length / 2;
+    if (shown < 1) shown = (shown - hash(key, 77) * 0.45) / 0.55;
     const last = Math.max(1, Math.floor((n - 1) * Math.min(1, shown)));
     if (alpha <= 0.004 || n < 2 || shown <= 0) {
       pts.length = 0;
       return;
     }
+    const from = back ? n - 1 - last : 0;
+    const to = back ? n - 1 : last;
     alpha *= tone;
     widthPx *= heavy;
     // Some lines are drawn heavy, as in the original.
@@ -208,7 +216,7 @@ export function drawNave(g: CanvasRenderingContext2D, O: Outline, S: NaveLook, s
     g.lineWidth = widthPx * px;
     let open = false;
     let run = 0;
-    for (let i = 0; i <= last; i++) {
+    for (let i = from; i <= to; i++) {
       const gap = S.naveBreaks > 0 && drift(key * 7 + 3, i / 9) > 1 - S.naveBreaks * 0.55;
       if (gap) {
         if (open) g.stroke();
@@ -281,7 +289,9 @@ export function drawNave(g: CanvasRenderingContext2D, O: Outline, S: NaveLook, s
   for (let r = 1; r <= ribs; r++) ribAt.push(springIndex + ((nSide - 1 - springIndex) * r) / (ribs + 1));
 
   // The end wall: where the floor meets it, under the window.
-  const wall = Math.min(1, t * 4);
+  // It is the last thing drawn: the sketch starts nearest you and ends here.
+  const wall = t >= 1 ? 1 : Math.min(1, Math.max(0, (t - 0.88) / 0.12));
+  pen = wall;
   line(X(1, -O.hw), Y(1, floor), X(1, O.hw), Y(1, floor));
   sketch(11, strength * 0.5 * wall * Math.min(1, 0.25 + (1 - Math.min(1, clear))), 0.9);
 
@@ -292,10 +302,13 @@ export function drawNave(g: CanvasRenderingContext2D, O: Outline, S: NaveLook, s
     const next = scaleAt(b + 1 - shift);
     if (next <= 1) continue;
     const behind = s < 1; // still behind the end wall: only its bay shows
-    // The draw-in: arches appear one after another, out from the window.
-    const order = Math.min(1, Math.max(0, (s - 1) / (reach - 1)));
-    const shown = t >= 1 ? 1 : Math.min(1, Math.max(0, (t - order * 0.62) / 0.3));
+    // The draw-in: bays are sketched one after another, starting nearest you
+    // and working in toward the window.
+    const order = 1 - Math.min(1, Math.max(0, Math.log(Math.max(1, s)) / Math.log(reach)));
+    const shown = t >= 1 ? 1 : Math.min(1, Math.max(0, (t - order * 0.66) / 0.34));
     if (shown <= 0) continue;
+    pen = shown;
+    back = false;
     const a = lit(s) * fadeIn(s);
     const key = id * 197;
     const R = (n: number) => hash(id, n + Math.round(S.mSeed) * 1000); // this bay's own random numbers
@@ -347,6 +360,7 @@ export function drawNave(g: CanvasRenderingContext2D, O: Outline, S: NaveLook, s
     }
 
     machine(false);
+    back = true; // everything from here runs along the bay
     const out = Math.max(1, s * band);
     if (next <= out) continue;
     const mid = (out + next) / 2;

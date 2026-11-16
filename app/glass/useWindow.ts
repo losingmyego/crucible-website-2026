@@ -2,6 +2,7 @@
 
 import { RefObject, useEffect, useRef } from "react";
 import { draw, paint, Layers, Settings, Stroke } from "./engine";
+import { opening, through as partway } from "../cathedral/opening";
 
 const HEX = /^#[0-9a-f]{6}$/i;
 export const rgb = (hex: string): [number, number, number] => {
@@ -121,10 +122,12 @@ export function useWindow(canvas: RefObject<HTMLCanvasElement | null>, layers: L
         c.globalCompositeOperation = "source-over";
       };
       const tick = () => {
-        const t = Math.max(0, Math.min(1, (performance.now() - state.start) / (seconds * 1000)));
-        const fp = ease(t / 0.36);
+        const t = opening.on ? partway("window") : Math.max(0, Math.min(1, (performance.now() - state.start) / (seconds * 1000)));
+        // On the timeline the lines use the whole bar, so the bar's end is where the drawing ends. The glass and its light have a bar of their own.
+        const late = opening.on ? 0.78 : 1;
+        const fp = ease((t * late) / 0.36);
         // The frame alone gives way to the frame as it sits among the other lines.
-        const join = ease((t - 0.3) / 0.3);
+        const join = ease((t * late - 0.3) / 0.3);
         a.clearRect(0, 0, layers.w, layers.h);
         b.clearRect(0, 0, layers.w, layers.h);
         if (frame) {
@@ -132,7 +135,7 @@ export function useWindow(canvas: RefObject<HTMLCanvasElement | null>, layers: L
           through(a, alone);
           lay(b, frame, fp, join);
         }
-        for (const { s, from, len } of plan) lay(b, s, ease((t - from) / len), 1);
+        for (const { s, from, len } of plan) lay(b, s, ease((t * late - from) / len), 1);
         through(b, lines);
         g.globalAlpha = 1;
         g.clearRect(0, 0, layers.w, layers.h);
@@ -141,13 +144,15 @@ export function useWindow(canvas: RefObject<HTMLCanvasElement | null>, layers: L
         g.globalAlpha = 1;
         g.drawImage(B, 0, 0);
         // The leading, the glass and everything between the lines fade in at the end.
-        const rest = ease((t - 0.62) / 0.38);
+        const rest = opening.on ? ease(partway("glass")) : ease((t - 0.62) / 0.38);
+
         if (rest > 0) {
           g.globalAlpha = rest;
           g.drawImage(full, 0, 0);
           g.globalAlpha = 1;
         }
-        if (t < 1) state.raf = requestAnimationFrame(tick);
+        // On the homepage the timeline holds the clock, so it keeps listening for a scrub or a replay.
+        if (t < 1 || opening.on) state.raf = requestAnimationFrame(tick);
         else state.start = 0;
       };
       tick();

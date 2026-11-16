@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { OPTIONS } from "./options";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 
@@ -51,6 +52,35 @@ const pack = () => {
   return btoa(encodeURIComponent(JSON.stringify(all))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 };
 
+const unpack = (packed: string): Record<string, unknown> => {
+  try {
+    return JSON.parse(decodeURIComponent(atob(packed.replace(/-/g, "+").replace(/_/g, "/"))));
+  } catch {
+    return {};
+  }
+};
+// Things that belong to the visitor, not to a look: they stay when the look is swapped.
+const KEPT = ["panel", "sound", "option", "window-panel"];
+const kept = (name: string) => KEPT.includes(name) || name.startsWith("fold:");
+// Put one of the options in place of the current settings.
+function install(n: number) {
+  for (const key of Object.keys(MEM)) {
+    if (kept(key.slice(PREFIX.length))) continue;
+    delete MEM[key];
+    try {
+      localStorage.removeItem(key);
+    } catch {}
+  }
+  const all = { ...unpack(OPTIONS[n]), option: { n } };
+  for (const [name, value] of Object.entries(all)) {
+    if (!value || typeof value !== "object" || (kept(name) && name !== "option")) continue;
+    MEM[PREFIX + name] = value;
+    try {
+      localStorage.setItem(PREFIX + name, JSON.stringify(value));
+    } catch {}
+  }
+}
+
 function boot() {
   if (booted || typeof window === "undefined") return;
   booted = true;
@@ -68,6 +98,8 @@ function boot() {
       } catch {}
     }
   }
+  // A visitor with nothing saved starts on Option 1.
+  if (OPTIONS.length > 0 && !Object.keys(MEM).some((key) => !kept(key.slice(PREFIX.length)))) install(0);
   // Settings carried in the address (a share link) win over what was stored.
   const m = window.location.hash.match(/^#set=([\w-]+)$/);
   if (!m) return;
@@ -107,7 +139,7 @@ export function writeSaved(key: string, value: unknown) {
 // (the sand views, the map views) keeps its own full set of colours for each
 // theme, so a colour changed under one theme is still there after switching
 // themes or views.
-const THEME_KEY = "crucible-site:theme";
+export const THEME_KEY = "crucible-site:theme";
 type Slots<C> = Partial<Record<ThemeName, Partial<C>>>;
 
 export function useThemeColors<C extends Record<string, string>>(
@@ -192,6 +224,21 @@ export function Versions({ current }: { current: string }) {
         </Link>
       ))}
     </nav>
+  );
+}
+
+// A section of a settings panel that folds open and closed, and remembers which.
+export function Fold({ id, title, open: openAtFirst = false, children }: { id: string; title: string; open?: boolean; children: React.ReactNode }) {
+  const [ui, setUi] = useStored<{ open: boolean }>(`crucible-site:fold:${id}`, { open: openAtFirst });
+  return (
+    <section className={`fold${ui.open ? " open" : ""}`}>
+      <div className="fold-head">
+        <button className="fold-title" aria-expanded={ui.open} onClick={() => setUi({ open: !ui.open })}>
+          <i>{ui.open ? "−" : "+"}</i> {title}
+        </button>
+      </div>
+      {ui.open && <div className="fold-body">{children}</div>}
+    </section>
   );
 }
 
@@ -302,15 +349,26 @@ export function Panel<T extends Record<string, number | string>>({
 
 // A small button that shows or hides the settings panel. The panel is for
 // working on the page and starts hidden; the choice is remembered.
+//
+// The settings are for working on the site, so the button only appears on a
+// working copy: this computer, or a branch preview (their addresses contain
+// "-git-"). On the live address there is no button, no panel and no timeline.
+// Adding ?settings to the live address brings them back for that visit.
 export function PanelToggle() {
   const [open, setOpen] = useState(false);
+  const [working, setWorking] = useState(false);
   useEffect(() => {
+    const host = location.hostname;
+    const ok = host === "localhost" || host === "127.0.0.1" || host.includes("-git-") || new URLSearchParams(location.search).has("settings");
+    setWorking(ok);
+    if (!ok) return;
     const saved = readSaved<{ open?: boolean }>(PREFIX + "panel");
     if (saved?.open) setOpen(true);
   }, []);
   useEffect(() => {
     document.documentElement.toggleAttribute("data-panel", open);
   }, [open]);
+  if (!working) return null;
   return (
     <button
       className="panel-toggle"
@@ -322,5 +380,41 @@ export function PanelToggle() {
     >
       {open ? "hide settings" : "settings"}
     </button>
+  );
+}
+
+// Option 1, 2, 3: swaps the whole look for one of the saved options. The page
+// loads again with the new look and goes straight in, without the enter screen.
+export const SKIP_GATE = "crucible-site-skip-gate";
+export function OptionSwitch() {
+  const [current, setCurrent] = useState(-1);
+  useEffect(() => {
+    if (OPTIONS.length < 2) return;
+    setCurrent(readSaved<{ n?: number }>(PREFIX + "option")?.n ?? -1);
+    document.documentElement.setAttribute("data-options", "");
+  }, []);
+  if (OPTIONS.length < 2) return null;
+  return (
+    <div className="options" role="group" aria-label="Options">
+      <span>Option</span>
+      {OPTIONS.map((_, n) => (
+        <button
+          key={n}
+          aria-pressed={n === current}
+          onClick={() => {
+            if (n === current) return;
+            // On a working copy, keep what was there, so a swap never loses unsaved work.
+            try {
+              localStorage.setItem("crucible-site-before-swap", shareLink());
+              sessionStorage.setItem(SKIP_GATE, "1");
+            } catch {}
+            install(n);
+            location.reload();
+          }}
+        >
+          {n + 1}
+        </button>
+      ))}
+    </div>
   );
 }
