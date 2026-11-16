@@ -29,7 +29,7 @@ import { outlineOf, Outline } from "../glass/nave";
 type Look = {
   walk: number; // how far the cathedral comes toward you as you scroll
   align: "left" | "center" | "justified"; // how the lines of text are set
-  font: "times" | "sans" | "mono"; // the text face. Times and sans are system faces.
+  font: "cantarell" | "times" | "sans" | "mono"; // the text face. Cantarell is served with the site; Times and sans are system faces.
   wrap: "normal" | "tidy" | "even"; // how lines break: as they fall, avoiding short last lines, or all lines near the same length
   textSize: number; // in pixels
   textLine: number; // line height, as a multiple of the text size
@@ -47,8 +47,9 @@ type Look = {
 };
 
 // Neesh's settings as of 2026-11-16.
-const LOOK: Look = { walk: 0.5, font: "times", align: "left", wrap: "tidy", open: 1.2, textSize: 15, textLine: 1.6, textTrack: 0, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page", scrimColor: "#2a1c15", scrimShape: "linear", scrimSolid: 0.25, scrimEnd: 1, scrimWide: 1.2 };
+const LOOK: Look = { walk: 0.5, font: "cantarell", align: "left", wrap: "tidy", open: 1.2, textSize: 15, textLine: 1.6, textTrack: 0, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page", scrimColor: "#2a1c15", scrimShape: "linear", scrimSolid: 0.25, scrimEnd: 1, scrimWide: 1.2 };
 const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+const CANTARELL = 'Cantarell, "Helvetica Neue", Arial, sans-serif';
 const TIMES = '"Times New Roman", Times, serif';
 
 // A soft drone with slow voices, made in the browser. A stand-in for a real
@@ -282,6 +283,7 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
   useEffect(() => {
     const root = document.documentElement;
     if (look.font === "sans") root.style.setProperty("--text-font", SANS);
+    else if (look.font === "cantarell") root.style.setProperty("--text-font", CANTARELL);
     else if (look.font === "times") root.style.setProperty("--text-font", TIMES);
     else root.style.removeProperty("--text-font");
     // Justified text in the sans face keeps its normal word spaces; the mono face is tightened a little.
@@ -296,6 +298,8 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
     root.style.setProperty("--text-track", `${look.textTrack / 100}em`);
     // The dust measures where the words sit, so tell it they have moved.
     const moved = setTimeout(() => window.dispatchEvent(new Event("resize")), 60);
+    // A served face can arrive a moment later and shift the lines.
+    document.fonts?.ready.then(() => window.dispatchEvent(new Event("resize")));
     root.style.setProperty("--text-width", `${look.textWidth}px`);
     return () => {
       clearTimeout(moved);
@@ -348,7 +352,7 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
       {slider("textTrack", "letter spacing (kerning)", -5, 20, 0.1)}
       {slider("textWidth", "text column width (px)", 280, 900, 10)}
       <div className="actions">
-        {(["times", "sans", "mono"] as const).map((f) => (
+        {(["cantarell", "times", "sans", "mono"] as const).map((f) => (
           <button key={f} className={look.font === f ? "on" : ""} onClick={() => set({ font: f })}>
             {f === "times" ? "times new roman" : f}
           </button>
