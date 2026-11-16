@@ -20,8 +20,9 @@ const CLIPS = {
 
 const PARTS = Object.keys(CLIPS) as Part[];
 
-// Runs the opening from a DialKit timeline. `go` starts it. The dock shows
-// whenever the settings panel is open.
+// Runs the opening from a DialKit timeline. `go` starts it. The dock is put
+// away for now (Neesh, 2026-11-16): it shows only when the settings panel is
+// open and the address ends in ?timeline.
 export default function OpeningTimeline({ go }: { go: boolean }) {
   // TODO(production): DialKit's clip.current values are the scrubbable authoring preview.
   // Replace them with equivalent real Motion animations using the tuned timeline
@@ -31,7 +32,8 @@ export default function OpeningTimeline({ go }: { go: boolean }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    const read = () => setPanel(root.hasAttribute("data-panel"));
+    const wanted = new URLSearchParams(location.search).has("timeline");
+    const read = () => setPanel(wanted && root.hasAttribute("data-panel"));
     read();
     const watch = new MutationObserver(read);
     watch.observe(root, { attributes: true, attributeFilter: ["data-panel"] });

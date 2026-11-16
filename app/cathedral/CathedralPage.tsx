@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import SandText, { sandNeck } from "../SandText";
 import Rays from "../glass/Rays";
 import { SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
-import { Fold, SKIP_GATE, isDark, readSaved, useStored, writeSaved } from "../lab";
+import { Fold, SKIP_GATE, isDark, isWorkingCopy, readSaved, useStored, writeSaved } from "../lab";
 import WindowCanvas from "../glass/WindowCanvas";
 import { GLASS_LOOK } from "../glass/look";
 import Nave from "../glass/Nave";
@@ -282,6 +282,23 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
     setEntered(true);
     setTimeout(() => setVeil(false), 2200);
   };
+  // On the client site the page always opens at the top, with the text at its
+  // starting position, even when the browser remembers where it was scrolled to.
+  useEffect(() => {
+    if (isWorkingCopy()) return;
+    history.scrollRestoration = "manual";
+    const top = () => window.scrollTo(0, 0);
+    top();
+    // Some browsers put the old position back a moment after load.
+    const again = [60, 300, 800].map((ms) => setTimeout(top, ms));
+    window.addEventListener("load", top);
+    window.addEventListener("pageshow", top);
+    return () => {
+      again.forEach(clearTimeout);
+      window.removeEventListener("load", top);
+      window.removeEventListener("pageshow", top);
+    };
+  }, []);
   // After swapping options the page comes back already entered.
   useEffect(() => {
     try {
@@ -422,7 +439,7 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
         {look.scrimShape === "radial" && slider("scrimWide", "half circle width", 0.3, 3, 0.01)}
       </Fold>
       <Fold id="home-opening" title="opening">
-        <p className="note">Timings are on the timeline along the bottom. The window, the cathedral and the light are set in the window tool.</p>
+        <p className="note">The timings are set. To change them, add ?timeline to the address and a timeline appears along the bottom. The window, the cathedral and the light are set in the window tool.</p>
         <div className="actions">
           <button onClick={() => setReplay((n) => n + 1)}>replay load</button>
           <button
