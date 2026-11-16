@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import SandText, { sandNeck } from "../SandText";
 import Rays from "../glass/Rays";
 import { SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
-import { Fold, isDark, readSaved, useStored, writeSaved } from "../lab";
+import { Fold, SKIP_GATE, isDark, readSaved, useStored, writeSaved } from "../lab";
 import WindowCanvas from "../glass/WindowCanvas";
 import { GLASS_LOOK } from "../glass/look";
 import Nave from "../glass/Nave";
@@ -281,6 +281,18 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
     setEntered(true);
     setTimeout(() => setVeil(false), 2200);
   };
+  // After swapping options the page comes back already entered.
+  useEffect(() => {
+    try {
+      if (!sessionStorage.getItem(SKIP_GATE)) return;
+      sessionStorage.removeItem(SKIP_GATE);
+    } catch {
+      return;
+    }
+    setEntered(true);
+    setVeil(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     document.documentElement.toggleAttribute("data-gate", !entered);
     return () => document.documentElement.removeAttribute("data-gate");

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { OPTIONS } from "./options";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 
@@ -51,6 +52,35 @@ const pack = () => {
   return btoa(encodeURIComponent(JSON.stringify(all))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 };
 
+const unpack = (packed: string): Record<string, unknown> => {
+  try {
+    return JSON.parse(decodeURIComponent(atob(packed.replace(/-/g, "+").replace(/_/g, "/"))));
+  } catch {
+    return {};
+  }
+};
+// Things that belong to the visitor, not to a look: they stay when the look is swapped.
+const KEPT = ["panel", "sound", "option", "window-panel"];
+const kept = (name: string) => KEPT.includes(name) || name.startsWith("fold:");
+// Put one of the options in place of the current settings.
+function install(n: number) {
+  for (const key of Object.keys(MEM)) {
+    if (kept(key.slice(PREFIX.length))) continue;
+    delete MEM[key];
+    try {
+      localStorage.removeItem(key);
+    } catch {}
+  }
+  const all = { ...unpack(OPTIONS[n]), option: { n } };
+  for (const [name, value] of Object.entries(all)) {
+    if (!value || typeof value !== "object" || (kept(name) && name !== "option")) continue;
+    MEM[PREFIX + name] = value;
+    try {
+      localStorage.setItem(PREFIX + name, JSON.stringify(value));
+    } catch {}
+  }
+}
+
 function boot() {
   if (booted || typeof window === "undefined") return;
   booted = true;
@@ -68,6 +98,8 @@ function boot() {
       } catch {}
     }
   }
+  // A visitor with nothing saved starts on Option 1.
+  if (OPTIONS.length > 0 && !Object.keys(MEM).some((key) => !kept(key.slice(PREFIX.length)))) install(0);
   // Settings carried in the address (a share link) win over what was stored.
   const m = window.location.hash.match(/^#set=([\w-]+)$/);
   if (!m) return;
@@ -348,5 +380,41 @@ export function PanelToggle() {
     >
       {open ? "hide settings" : "settings"}
     </button>
+  );
+}
+
+// Option 1, 2, 3: swaps the whole look for one of the saved options. The page
+// loads again with the new look and goes straight in, without the enter screen.
+export const SKIP_GATE = "crucible-site-skip-gate";
+export function OptionSwitch() {
+  const [current, setCurrent] = useState(-1);
+  useEffect(() => {
+    if (OPTIONS.length < 2) return;
+    setCurrent(readSaved<{ n?: number }>(PREFIX + "option")?.n ?? -1);
+    document.documentElement.setAttribute("data-options", "");
+  }, []);
+  if (OPTIONS.length < 2) return null;
+  return (
+    <div className="options" role="group" aria-label="Options">
+      <span>Option</span>
+      {OPTIONS.map((_, n) => (
+        <button
+          key={n}
+          aria-pressed={n === current}
+          onClick={() => {
+            if (n === current) return;
+            // On a working copy, keep what was there, so a swap never loses unsaved work.
+            try {
+              localStorage.setItem("crucible-site-before-swap", shareLink());
+              sessionStorage.setItem(SKIP_GATE, "1");
+            } catch {}
+            install(n);
+            location.reload();
+          }}
+        >
+          {n + 1}
+        </button>
+      ))}
+    </div>
   );
 }
