@@ -13,7 +13,7 @@ const CLIPS = {
   cathedral: { at: 0, duration: 2.9 },
   scrim: { at: 1.03, duration: 1.7 },
   glow: { at: 3.18, duration: 2.8 },
-  text: { at: 1.63, duration: 4.87 },
+  text: { at: 2.56, duration: 3.94 },
   shade: { at: 0.02, duration: 1.64 },
   rays: { at: 1.65, duration: 3.46 },
 } satisfies TimelineConfig;
