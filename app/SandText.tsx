@@ -160,7 +160,7 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
     const last = column?.querySelector<HTMLElement>("p:last-of-type");
     if (!column || !last) return;
     const size = () => {
-      const gap = 28 + settings.soft;
+      const gap = 64; // the closing paragraph comes to rest this far below the sand line
       // Everything from the top of the closing paragraph down to the end of the column's contents.
       const tilt = tiltRef.current;
       const was = tilt?.style.transform ?? "";
@@ -177,7 +177,7 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
       seen.disconnect();
       window.removeEventListener("resize", size);
     };
-  }, [settings.line, settings.soft]);
+  }, [settings.line]);
   const relayoutRef = useRef<() => void>(() => {});
   const guideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
