@@ -120,6 +120,7 @@ type Word = {
   h: number;
   gone: boolean;
   gen: number;
+  keep: boolean; // in the closing paragraph, which never turns to sand
 };
 
 type Glyphs = { xs: Float32Array; ys: Float32Array; n: number };
@@ -144,6 +145,29 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
   colorsRef.current = colors;
   // Show a guide line for a moment whenever the sand start is moved.
   const [guide, setGuide] = useState(false);
+  // The page ends with the closing paragraph resting just below the sand line:
+  // it is the last thing said, so it stays as text. The space under it is
+  // sized so the page cannot scroll it up into the sand.
+  const [endPad, setEndPad] = useState<number | null>(null);
+  useEffect(() => {
+    const column = columnRef.current;
+    const last = column?.querySelector<HTMLElement>("p:last-of-type");
+    if (!column || !last) return;
+    const size = () => {
+      const gap = 28 + settings.soft;
+      // Everything from the top of the closing paragraph down to the end of the column's contents.
+      const tail = (column.lastElementChild as HTMLElement).getBoundingClientRect().bottom - last.getBoundingClientRect().top;
+      setEndPad(Math.max(24, Math.round(window.innerHeight * (1 - settings.line) - gap - tail)));
+    };
+    size();
+    const seen = new ResizeObserver(size);
+    seen.observe(last);
+    window.addEventListener("resize", size);
+    return () => {
+      seen.disconnect();
+      window.removeEventListener("resize", size);
+    };
+  }, [settings.line, settings.soft]);
   const relayoutRef = useRef<() => void>(() => {});
   const guideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -271,6 +295,7 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
           h: parts[0].h,
           gone: prev[i]?.gone ?? false,
           gen: prev[i]?.gen ?? 0,
+          keep: el.closest("p") === column.querySelector("p:last-of-type"),
         };
       });
     };
@@ -413,7 +438,7 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
       const speed = dt > 0 ? scrolled / dt : 0; // page speed, pixels per second
       for (let i = 0; i < words.length; i++) {
         const word = words[i];
-        if (!word.gone && word.y < lineY) {
+        if (!word.gone && !word.keep && word.y < lineY) {
           const visible = word.y + word.h > sy - 40;
           dissolve(word, i, visible && !first && !reduced);
         } else if (word.gone && word.y > lineY + 3) {
@@ -723,7 +748,7 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
   return (
     <>
       {variant?.backdrop}
-      <div className="column" ref={columnRef} style={{ paddingTop: `${settings.start * 100}vh` }}>
+      <div className="column" ref={columnRef} style={{ paddingTop: `${settings.start * 100}vh`, paddingBottom: endPad === null ? undefined : endPad }}>
         {paragraphs.map((p, i) => (
           <p key={i} className={heads[i] ? "head" : undefined}>
             {p.split(" ").map((word, j) => (
@@ -735,6 +760,11 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
             ))}
           </p>
         ))}
+        {variant?.name === "home" && (
+          <div className="end">
+            <span className="end-mark" role="img" aria-label="Crucible" />
+          </div>
+        )}
       </div>
       <div className="sand-layer" aria-hidden>
         <canvas className="sand" ref={canvasRef} />

@@ -139,7 +139,7 @@ export default function GlassTool() {
   // Sections fold open and closed; some can be switched off as a whole.
   const [ui, setUi] = useStored<{ open: Record<string, boolean>; was: Record<string, number> }>("crucible-site:window-panel", { open: { drawing: true, rays: true, nave: true, space: true }, was: {} });
   const section = (id: string, title: string, body: React.ReactNode, sw?: keyof Look) => {
-    const open = !!ui.open[id];
+    const open = ui.open[id] ?? id === "room"; // the clear room section starts open
     const on = sw ? Number(look[sw]) > 0 : true;
     return (
       <section className={`fold${open ? " open" : ""}${on ? "" : " off"}`}>
@@ -168,7 +168,7 @@ export default function GlassTool() {
       </section>
     );
   };
-  const all = (open: boolean) => setUi({ ...ui, open: Object.fromEntries(["drawing", "stone", "symbol", "leading", "echo", "line", "light", "rays", "page", "nave", "etch", "space", "detail", "machine", "hand"].map((k) => [k, open])) });
+  const all = (open: boolean) => setUi({ ...ui, open: Object.fromEntries(["drawing", "stone", "symbol", "leading", "echo", "line", "light", "rays", "page", "nave", "room", "etch", "space", "detail", "machine", "hand"].map((k) => [k, open])) });
   const dark = isDark(theme.paper);
 
   return (
@@ -343,6 +343,16 @@ export default function GlassTool() {
           )}
           {look.naveView === "etched" &&
             section(
+              "room",
+              "clear room behind the window",
+              <>
+                {slider("etchClear", "width", 0.5, 2.5, 0.01)}
+                {slider("etchClearTall", "height", 0.5, 2.5, 0.01)}
+                {slider("etchClearSoft", "soft edge", 0, 1.5, 0.01)}
+              </>,
+            )}
+          {look.naveView === "etched" &&
+            section(
               "etch",
               "the engraving",
               <>
@@ -350,7 +360,6 @@ export default function GlassTool() {
                 {slider("etchY", "vertical position", -1, 1, 0.01)}
                 {slider("etchX", "horizontal position", -0.5, 0.5, 0.01)}
                 {slider("etchEye", "eye level", 0, 1, 0.01)}
-                {slider("etchClear", "clear room round the window", 0.5, 2.5, 0.01)}
                 {choice("etchInk", [["dark", "ink the shadows"], ["light", "ink the lights"]])}
                 {slider("etchLines", "engraving spacing", 0.8, 12, 0.1)}
                 {slider("etchWeight", "line weight", 0.4, 1.6, 0.01)}
