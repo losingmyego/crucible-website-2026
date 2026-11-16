@@ -38,6 +38,8 @@ body {
 .column {
   font-family: var(--text-font, inherit);
   font-size: var(--text-size, inherit);
+  line-height: var(--text-line, inherit);
+  letter-spacing: var(--text-track, normal);
   position: relative;
   z-index: 1;
   width: var(--text-width, 400px);

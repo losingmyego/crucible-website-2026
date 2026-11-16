@@ -32,6 +32,8 @@ type Look = {
   font: "times" | "sans" | "mono"; // the text face. Times and sans are system faces.
   wrap: "normal" | "tidy" | "even"; // how lines break: as they fall, avoiding short last lines, or all lines near the same length
   textSize: number; // in pixels
+  textLine: number; // line height, as a multiple of the text size
+  textTrack: number; // letter spacing, in hundredths of the text size (0 = as the face is drawn)
   open: number; // length of the opening: 1 is the set pace, 2 twice as long
   scrim: number; // strength of the shade rising from the bottom of the screen, behind the text
   scrimHeight: number; // how far up the screen it reaches
@@ -45,7 +47,7 @@ type Look = {
 };
 
 // Neesh's settings as of 2026-11-16.
-const LOOK: Look = { walk: 0.5, font: "times", align: "left", wrap: "tidy", open: 1.2, textSize: 15, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page", scrimColor: "#2a1c15", scrimShape: "linear", scrimSolid: 0.25, scrimEnd: 1, scrimWide: 1.2 };
+const LOOK: Look = { walk: 0.5, font: "times", align: "left", wrap: "tidy", open: 1.2, textSize: 15, textLine: 1.6, textTrack: 0, textWidth: 370, scrim: 0.14, scrimHeight: 0.5, scrimTone: "page", scrimColor: "#2a1c15", scrimShape: "linear", scrimSolid: 0.25, scrimEnd: 1, scrimWide: 1.2 };
 const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const TIMES = '"Times New Roman", Times, serif';
 
@@ -290,11 +292,16 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
     root.style.setProperty("--text-word", "nowrap");
     root.style.setProperty("--text-space", look.align === "justified" && look.font === "mono" ? "-0.18em" : "0em");
     root.style.setProperty("--text-size", `${look.textSize}px`);
+    root.style.setProperty("--text-line", String(look.textLine));
+    root.style.setProperty("--text-track", `${look.textTrack / 100}em`);
+    // The dust measures where the words sit, so tell it they have moved.
+    const moved = setTimeout(() => window.dispatchEvent(new Event("resize")), 60);
     root.style.setProperty("--text-width", `${look.textWidth}px`);
     return () => {
-      for (const k of ["--text-wrap", "--text-last", "--text-font", "--text-size", "--text-width", "--text-align", "--text-hyphens", "--text-word", "--text-space", "--o"]) root.style.removeProperty(k);
+      clearTimeout(moved);
+      for (const k of ["--text-wrap", "--text-last", "--text-font", "--text-size", "--text-line", "--text-track", "--text-width", "--text-align", "--text-hyphens", "--text-word", "--text-space", "--o"]) root.style.removeProperty(k);
     };
-  }, [look.wrap, look.font, look.align, look.textSize, look.textWidth, look.open]);
+  }, [look.wrap, look.font, look.align, look.textSize, look.textLine, look.textTrack, look.textWidth]);
 
   const slider = (key: keyof Look, label: string, min: number, max: number, step: number) => (
     <label>
@@ -337,6 +344,8 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
       {slider("scrimEnd", "gradient stop: faded out by", 0, 1, 0.01)}
       {look.scrimShape === "radial" && slider("scrimWide", "half circle width", 0.3, 3, 0.01)}
       {slider("textSize", "text size (px)", 10, 28, 0.5)}
+      {slider("textLine", "line height", 1, 2.4, 0.01)}
+      {slider("textTrack", "letter spacing (kerning)", -5, 20, 0.1)}
       {slider("textWidth", "text column width (px)", 280, 900, 10)}
       <div className="actions">
         {(["times", "sans", "mono"] as const).map((f) => (
