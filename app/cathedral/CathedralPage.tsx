@@ -11,7 +11,7 @@ import Rays from "../glass/Rays";
 import { SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
 import { Fold, SKIP_GATE, isDark, isWorkingCopy, readSaved, useStored, writeSaved } from "../lab";
 import WindowCanvas from "../glass/WindowCanvas";
-import { GLASS_LOOK } from "../glass/look";
+import { GLASS_KEY, GLASS_LOOK } from "../glass/look";
 import Nave from "../glass/Nave";
 import Etched from "../glass/Etched";
 import { outlineOf, Outline } from "../glass/nave";
@@ -172,7 +172,8 @@ function useChant() {
   return { on, toggle, begin };
 }
 
-function Backdrop({ look, replay }: { look: Look; replay: number }) {
+type Dust = { dustEnd: number; dustLoose: number };
+function Backdrop({ look, replay, dust }: { look: Look; replay: number; dust: Dust | null }) {
   const ref = useRef<HTMLDivElement>(null);
   const [dark, setDark] = useState(false);
   const [ink, setInk] = useState("#1a1a17");
@@ -218,15 +219,15 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
   const [layers, setLayers] = useState<Layers | null>(null);
   // The dust rises into the window and fades out inside it.
   useEffect(() => {
-    sandNeck.y = glass.top + glass.size * glass.dustEnd;
+    sandNeck.y = glass.top + glass.size * (dust?.dustEnd ?? glass.dustEnd);
     sandNeck.w = outline ? 2 * outline.hw * outline.ratio * glass.size * 0.8 : 0;
-    sandNeck.loose = glass.dustLoose;
+    sandNeck.loose = dust?.dustLoose ?? glass.dustLoose;
     return () => {
       sandNeck.y = 0;
       sandNeck.w = 0;
       sandNeck.loose = 0;
     };
-  }, [glass.top, glass.size, glass.dustEnd, glass.dustLoose, outline]);
+  }, [glass.top, glass.size, glass.dustEnd, glass.dustLoose, dust, outline]);
   // The opening starts when the window has been drawn, so every part moves together.
   const [go, setGo] = useState(false);
   useEffect(() => {
@@ -291,6 +292,26 @@ function scrimPaint(look: Look, paper: string) {
 export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) {
   const [look, setLook] = useStored<Look>("crucible-site:home-look", LOOK);
   const [replay, setReplay] = useState(0);
+  // Where the sand ends inside the window. Kept with the window's settings
+  // (they are measured against the window), shown with the other sand settings.
+  const [dust, setDustState] = useState<Dust | null>(null);
+  useEffect(() => {
+    const saved = readSaved<Partial<Dust>>(GLASS_KEY) || {};
+    setDustState({ dustEnd: saved.dustEnd ?? GLASS_LOOK.dustEnd, dustLoose: saved.dustLoose ?? GLASS_LOOK.dustLoose });
+  }, []);
+  const setDust = (part: Partial<Dust>) => {
+    const next = { ...(dust || { dustEnd: GLASS_LOOK.dustEnd, dustLoose: GLASS_LOOK.dustLoose }), ...part };
+    setDustState(next);
+    writeSaved(GLASS_KEY, { ...GLASS_LOOK, ...(readSaved<object>(GLASS_KEY) || {}), ...next });
+  };
+  const dustSlider = (key: keyof Dust, label: string) => (
+    <label>
+      <span>
+        {label} <b>{Number(dust?.[key] ?? GLASS_LOOK[key]).toFixed(2)}</b>
+      </span>
+      <input type="range" min={0} max={1} step={0.01} value={Number(dust?.[key] ?? GLASS_LOOK[key])} onChange={(e) => setDust({ [key]: Number(e.target.value) })} />
+    </label>
+  );
   const chant = useChant();
   // The enter moment: a veil with the lockup. Nothing opens, and no sound plays, until it is pressed.
   const [entered, setEntered] = useState(false);
@@ -496,8 +517,14 @@ export default function CathedralPage({ paragraphs }: { paragraphs: string[] }) 
         variant={{
           name: "home",
           href: "/",
-          backdrop: entered ? <Backdrop key={replay} look={look} replay={replay} /> : null,
+          backdrop: entered ? <Backdrop key={replay} look={look} replay={replay} dust={dust} /> : null,
           extra,
+          sand: (
+            <>
+              {dustSlider("dustEnd", "sand fades out at (0 = top of the window, 1 = its sill)")}
+              {dustSlider("dustLoose", "sand in the window: funnel (0) to drift (1)")}
+            </>
+          ),
           scroll: slider("walk", "walk in on scroll", 0, 1, 0.05),
           reset: <button onClick={() => setLook(LOOK)}>reset type, scrim and walk</button>,
         }}
