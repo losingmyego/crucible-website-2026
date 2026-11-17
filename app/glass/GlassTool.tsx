@@ -8,6 +8,7 @@ import { rgb, useWindow } from "./useWindow";
 import Rays from "./Rays";
 import Nave from "./Nave";
 import Etched from "./Etched";
+import WindowEtch from "./WindowEtch";
 import { outlineOf } from "./nave";
 import { FRAMES, GLASS_KEY, GLASS_LOOK as LOOK, Look, NAVES, place, UPLOAD_KEY } from "./look";
 
@@ -143,7 +144,7 @@ export default function GlassTool() {
   // Sections fold open and closed; some can be switched off as a whole.
   const [ui, setUi] = useStored<{ open: Record<string, boolean>; was: Record<string, number> }>("crucible-site:window-panel", { open: { drawing: true, rays: true, nave: true, space: true }, was: {} });
   const section = (id: string, title: string, body: React.ReactNode, sw?: keyof Look) => {
-    const open = ui.open[id] ?? id === "room"; // the clear room section starts open
+    const open = ui.open[id] ?? (id === "room" || id === "winetch"); // newer sections start open
     const on = sw ? Number(look[sw]) > 0 : true;
     return (
       <section className={`fold${open ? " open" : ""}${on ? "" : " off"}`}>
@@ -172,7 +173,7 @@ export default function GlassTool() {
       </section>
     );
   };
-  const all = (open: boolean) => setUi({ ...ui, open: Object.fromEntries(["drawing", "stone", "symbol", "leading", "echo", "line", "light", "rays", "page", "nave", "room", "etch", "space", "detail", "machine", "hand"].map((k) => [k, open])) });
+  const all = (open: boolean) => setUi({ ...ui, open: Object.fromEntries(["drawing", "stone", "symbol", "leading", "echo", "line", "winetch", "light", "rays", "page", "nave", "room", "etch", "space", "detail", "machine", "hand"].map((k) => [k, open])) });
   const dark = isDark(theme.paper);
 
   return (
@@ -191,6 +192,7 @@ export default function GlassTool() {
         {look.cathedral > 0 && look.naveView === "etched" && <Etched outline={outline} look={look} ink={picked.nave || theme.ink} strength={look.cathedral} top={look.top} size={look.size} play={play} />}
         <div className="beam" />
         {(look.rays > 0 || look.rayShade > 0) && <Rays outline={outline} look={look} ink={picked.ink} shade={picked.shade} light={picked.rays} top={look.top} size={look.size} dark={dark} />}
+        {look.winEtch > 0 && <WindowEtch layers={layers} look={look} ink={theme.ink} className="win-canvas" style={place(layers)} />}
         <canvas ref={canvas} className="win-canvas" style={place(layers)} />
       </div>
       <div className="panel">
@@ -288,6 +290,26 @@ export default function GlassTool() {
                 <button onClick={() => set({ soft: 0.35, grain: 0, breaks: 0, wobble: 0, level: 0.5 })}>clean</button>
               </div>
             </>,
+          )}
+          {section(
+            "winetch",
+            "engraving on the window",
+            <>
+              {slider("winEtch", "strength", 0, 1, 0.01)}
+              {slider("winEtchStone", "stone tone", 0, 1, 0.01)}
+              {slider("winEtchSymbol", "symbol tone", 0, 1, 0.01)}
+              {slider("winEtchGlass", "glass tone", 0, 1, 0.01)}
+              {slider("winEtchRound", "carved: lighter toward the middle of the stone", 0, 1, 0.01)}
+              {slider("winEtchLines", "engraving spacing", 0.8, 12, 0.1)}
+              {slider("winEtchWeight", "line weight", 0.4, 1.6, 0.01)}
+              {slider("winEtchAngle", "engraving angle", -90, 90, 1)}
+              {slider("winEtchBend", "contour flow", 0, 1.6, 0.01)}
+              {slider("winEtchCross", "shadow crosshatching", 0, 1, 0.01)}
+              {slider("winEtchStipple", "fine stippling", 0, 1, 0.01)}
+              {slider("winEtchWear", "ink wear", 0, 1, 0.01)}
+              <p className="note">The window&apos;s own lines stay on top. Their strength is under stone, symbol and leading.</p>
+            </>,
+            "winEtch",
           )}
           {section(
             "light",
