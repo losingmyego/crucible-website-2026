@@ -119,6 +119,22 @@ function keepWork() {
   slots[n] = lookNow();
   put("options", { slots });
 }
+// Give some of the window settings on screen to every other option. Returns
+// how many options received them.
+export function giveWindowToOthers(keys: string[]): number {
+  if (typeof window === "undefined" || !isWorkingCopy()) return 0;
+  keepWork();
+  const slots = workOrBuiltIn();
+  const n = currentOption();
+  const source = slots[n]?.window as Record<string, unknown> | undefined;
+  if (!source) return 0;
+  const picked = Object.fromEntries(keys.filter((key) => key in source).map((key) => [key, source[key]]));
+  slots.forEach((slot, i) => {
+    if (i !== n) slot.window = { ...(slot.window as object), ...picked };
+  });
+  put("options", { slots });
+  return slots.length - 1;
+}
 // Put a look in place of the current settings.
 function install(n: number, look: LookSet = lookOnly(unpack(OPTIONS[n]))) {
   for (const key of Object.keys(MEM)) {

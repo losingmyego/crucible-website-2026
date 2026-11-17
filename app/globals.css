@@ -1248,3 +1248,12 @@ html[data-options][data-timeline][data-panel] .panel {
     bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* "apply to all options" at the foot of a window tool section */
+.panel .actions.give {
+  margin-top: 10px;
+}
+.panel .actions.give button {
+  width: 100%;
+  opacity: 0.75;
+}

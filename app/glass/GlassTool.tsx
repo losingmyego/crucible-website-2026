@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ShareButton, THEME_KEY, onSync, isDark, Versions, readSaved, writeSaved, useStored, usePageColors, type ThemeName } from "../lab";
+import { ShareButton, giveWindowToOthers, isWorkingCopy, THEME_KEY, onSync, isDark, Versions, readSaved, writeSaved, useStored, usePageColors, type ThemeName } from "../lab";
 import { BASE_COLORS } from "../SandText";
 import { draw, loadWindow, paint, Layers } from "./engine";
 import { rgb, useWindow } from "./useWindow";
@@ -125,7 +125,13 @@ export default function GlassTool() {
     });
   };
 
-  const slider = (key: keyof Look, label: string, min: number, max: number, step: number) => (
+  // Which settings each section holds: every slider and choice notes its
+  // setting here as it is made, and the section that follows collects them.
+  const held: string[] = [];
+  const [given, setGiven] = useState("");
+  const [working, setWorking] = useState(false);
+  useEffect(() => setWorking(isWorkingCopy()), []);
+  const slider = (key: keyof Look, label: string, min: number, max: number, step: number) => (held.push(key),
     <label>
       <span>
         {label} <b>{Number(look[key]).toFixed(step < 1 ? 2 : 0)}</b>
@@ -133,7 +139,7 @@ export default function GlassTool() {
       <input type="range" min={min} max={max} step={step} value={Number(look[key])} onChange={(e) => set({ [key]: Number(e.target.value) } as Partial<Look>)} />
     </label>
   );
-  const choice = (key: keyof Look, options: [string | number, string][]) => (
+  const choice = (key: keyof Look, options: [string | number, string][]) => (held.push(key),
     <div className="actions pick">
       {options.map(([value, label]) => (
         <button key={String(value)} className={look[key] === value ? "on" : ""} onClick={() => set({ [key]: value } as Partial<Look>)}>
@@ -147,6 +153,7 @@ export default function GlassTool() {
   const section = (id: string, title: string, body: React.ReactNode, sw?: keyof Look) => {
     const open = ui.open[id] ?? (id === "room" || id === "winetch"); // newer sections start open
     const on = sw ? Number(look[sw]) > 0 : true;
+    const keys = [...new Set([...held.splice(0), ...(sw ? [sw as string] : []), ...(id === "line" ? ["seed"] : []), ...(id === "machine" ? ["mSeed"] : [])])];
     return (
       <section className={`fold${open ? " open" : ""}${on ? "" : " off"}`}>
         <div className="fold-head">
@@ -170,7 +177,25 @@ export default function GlassTool() {
             </button>
           )}
         </div>
-        {open && <div className="fold-body">{body}</div>}
+        {open && (
+          <div className="fold-body">
+            {body}
+            {keys.length > 0 && working && (
+              <div className="actions give">
+                <button
+                  onClick={() => {
+                    const count = giveWindowToOthers(keys);
+                    setGiven(id);
+                    setTimeout(() => setGiven(""), 2500);
+                    if (!count) setGiven("");
+                  }}
+                >
+                  {given === id ? "applied to all options ✓" : "apply to all options"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </section>
     );
   };
@@ -375,7 +400,8 @@ export default function GlassTool() {
             <>
               {slider("fxSheen", "strength", 0, 1.5, 0.01)}
               {slider("fxSheenWidth", "width of the glint", 0.05, 1, 0.01)}
-              {slider("fxSheenEvery", "seconds between glints", 3, 30, 0.5)}
+              {slider("fxSheenTime", "seconds to cross the glass (higher = slower)", 1, 30, 0.5)}
+              {slider("fxSheenEvery", "seconds of rest between glints", 0, 30, 0.5)}
               {slider("fxSheenAngle", "angle", -80, 80, 1)}
             </>,
             "fxSheen",
