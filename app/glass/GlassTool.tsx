@@ -400,7 +400,8 @@ export default function GlassTool() {
             <>
               {slider("fxSheen", "strength", 0, 1.5, 0.01)}
               {slider("fxSheenWidth", "width of the glint", 0.05, 1, 0.01)}
-              {slider("fxSheenEvery", "seconds between glints", 3, 30, 0.5)}
+              {slider("fxSheenTime", "seconds to cross the glass (higher = slower)", 1, 30, 0.5)}
+              {slider("fxSheenEvery", "seconds of rest between glints", 0, 30, 0.5)}
               {slider("fxSheenAngle", "angle", -80, 80, 1)}
             </>,
             "fxSheen",

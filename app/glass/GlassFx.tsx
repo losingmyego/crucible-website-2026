@@ -29,7 +29,8 @@ export type FxLook = {
   fxBloomPulse: number; // how much it breathes
   fxSheen: number;
   fxSheenWidth: number;
-  fxSheenEvery: number; // seconds between one glint and the next
+  fxSheenEvery: number; // seconds of rest between one glint and the next
+  fxSheenTime: number; // seconds one glint takes to cross the glass
   fxSheenAngle: number; // degrees
   fxChroma: number;
   fxChromaSplit: number; // how far the colours part, in pixels
@@ -50,6 +51,7 @@ export const FX_LOOK: FxLook = {
   fxSheen: 0,
   fxSheenWidth: 0.25,
   fxSheenEvery: 7,
+  fxSheenTime: 7,
   fxSheenAngle: 25,
   fxChroma: 0,
   fxChromaSplit: 3,
@@ -79,7 +81,7 @@ uniform float solid;      // 0 on a dark page (light is added), above 0 on a lig
 uniform float shown;
 uniform float caustics, cSize, cSpeed, cReach, cColor;
 uniform float bloom, bSpread, bPulse;
-uniform float sheen, sWidth, sEvery, sAngle;
+uniform float sheen, sWidth, sEvery, sAngle, sTime;
 uniform float chroma, cSplit;
 uniform float sparkle, kCount, kSize;
 out vec4 outColor;
@@ -129,8 +131,9 @@ void main() {
     float a = radians(sAngle);
     vec2 w = (uv - vec2((open.x + open.z) * 0.5, (open.y + open.w) * 0.5)) * vec2(rect.z / rect.w, 1.0);
     float along = w.x * cos(a) + w.y * sin(a);
-    float cycle = fract(time / max(1.0, sEvery));
-    float span = min(1.0, 3.2 / max(1.0, sEvery)); // the crossing takes about three seconds
+    float whole = max(0.5, sTime) + max(0.0, sEvery); // one crossing, then the rest
+    float cycle = fract(time / whole);
+    float span = max(0.5, sTime) / whole;
     float pos = mix(-0.9, 0.9, cycle / span);
     float band = cycle < span ? exp(-pow((along - pos) / max(0.02, sWidth * 0.35), 2.0)) : 0.0;
     col += light * band * glass * sheen * 0.6;
@@ -388,6 +391,7 @@ export default function GlassFx({ layers, look, light, dark }: { layers: Layers 
       gl.uniform1f(U("sWidth"), look.fxSheenWidth);
       gl.uniform1f(U("sEvery"), look.fxSheenEvery);
       gl.uniform1f(U("sAngle"), look.fxSheenAngle);
+      gl.uniform1f(U("sTime"), look.fxSheenTime ?? 7);
       gl.uniform1f(U("chroma"), look.fxChroma);
       gl.uniform1f(U("cSplit"), look.fxChromaSplit);
       gl.uniform1f(U("sparkle"), look.fxSparkle);
