@@ -4,12 +4,13 @@ import type { Settings } from "./engine";
 import type { NaveLook } from "./nave";
 import { ETCH_LOOK, EtchLook } from "./Etched";
 import { WIN_ETCH_LOOK, WinEtchLook } from "./WindowEtch";
+import { FX_LOOK, FxLook } from "./GlassFx";
 
 // The window tool's settings and what it opens on.
 export const GLASS_KEY = "crucible-site:window";
 export const UPLOAD_KEY = "crucible-site:window-upload";
 
-export type Look = Settings & NaveLook & RayLook & EtchLook & WinEtchLook & {
+export type Look = Settings & NaveLook & RayLook & EtchLook & WinEtchLook & FxLook & {
   walk: number; // bays walked toward the window
   walkScroll: number; // bays walked for each screen scrolled
   frame: string; // which window drawing
@@ -101,6 +102,7 @@ export const GLASS_LOOK: Look = {
   rayColor: "white",
   ...ETCH_LOOK,
   ...WIN_ETCH_LOOK,
+  ...FX_LOOK,
 };
 
 // Where a window canvas sits: the drawing has empty room round the window, so

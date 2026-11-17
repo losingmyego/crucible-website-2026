@@ -1,6 +1,8 @@
 "use client";
 
 import SiteNav from "../site/SiteNav";
+import GlassFx, { fxOn } from "../glass/GlassFx";
+import type { Layers } from "../glass/engine";
 import OpeningTimeline from "./OpeningTimeline";
 
 import { useEffect, useRef, useState } from "react";
@@ -213,6 +215,7 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
   // Size, position and light come from the window tool.
   const [glass, setGlass] = useState(GLASS_LOOK);
   const [outline, setOutline] = useState<Outline | null>(null);
+  const [layers, setLayers] = useState<Layers | null>(null);
   // The dust rises into the window and fades out inside it.
   useEffect(() => {
     sandNeck.y = glass.top + glass.size * glass.dustEnd;
@@ -265,7 +268,12 @@ function Backdrop({ look, replay }: { look: Look; replay: number }) {
           }}
         />
       )}
-      <WindowCanvas ink={line} paper={paper} className="win-canvas" play={1} onLook={setGlass} onLayers={(L) => setOutline(outlineOf(L))} />
+      <WindowCanvas ink={line} paper={paper} className="win-canvas" play={1} onLook={setGlass} onLayers={(L) => {
+          setLayers(L);
+          setOutline(outlineOf(L));
+        }}
+      />
+      {fxOn(glass) && <GlassFx layers={layers} look={glass} light={rays} dark={dark} />}
     </div>
   );
 }
