@@ -5,6 +5,7 @@ import { readSaved } from "../lab";
 import { loadWindow, Layers } from "./engine";
 import { GLASS_KEY, GLASS_LOOK, Look, place, UPLOAD_KEY } from "./look";
 import { useWindow } from "./useWindow";
+import WindowEtch from "./WindowEtch";
 
 // The window as it is currently set in the window tool (/tool), for use on
 // other pages. It reads the tool's saved settings from this browser, or the
@@ -38,5 +39,10 @@ export default function WindowCanvas({ ink, paper, className, play = 1, seconds,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useWindow(canvas, layers, look, ink, paper, play, seconds);
-  return <canvas ref={canvas} className={className} style={place(layers)} />;
+  return (
+    <>
+      {look.winEtch > 0 && <WindowEtch layers={layers} look={look} ink={ink} className={className} style={place(layers)} />}
+      <canvas ref={canvas} className={className} style={place(layers)} />
+    </>
+  );
 }

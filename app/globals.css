@@ -436,6 +436,14 @@ body {
   transform: translateX(-50%);
 }
 
+/* Light effects on the glass: one full-screen layer over the window. */
+.cathedral .glass-fx {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
 @keyframes cathedral-in {
   from {
     opacity: 0;
