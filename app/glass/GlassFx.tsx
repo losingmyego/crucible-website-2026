@@ -205,7 +205,9 @@ void main() {
   }
 
   col *= shown;
-  if (solid <= 0.0) { outColor = vec4(min(col, vec3(1.0)), 0.0); return; }
+  // Dark page: the light is laid on with its own brightness as its cover.
+  // (Colour with no cover at all is not drawn by every graphics card.)
+  if (solid <= 0.0) { col = min(col, vec3(1.0)); outColor = vec4(col, max(col.r, max(col.g, col.b))); return; }
   // Light page: the light is laid on in its own colour, over the shade.
   col = min(col * 1.6, vec3(1.0));
   float a = max(col.r, max(col.g, col.b));
