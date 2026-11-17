@@ -115,6 +115,7 @@ void main() {
   vec4 m = at(mask, uv);
   float glass = m.r;
   vec3 col = vec3(0.0);
+  float shade = 0.0;
 
   // Light bloom: the glass, blurred, so it reaches past the panes.
   if (bloom > 0.0) {
@@ -144,7 +145,7 @@ void main() {
     vec3 split = vec3(r, g, b);
     // What all three share is plain light; only the difference is colour.
     float shared = min(r, min(g, b));
-    col += (split - shared * 0.85) * chroma * 0.9;
+    col += (split - shared * mix(0.85, 1.0, step(0.001, solid))) * chroma * 0.9;
   }
 
   // Sparkle: small glints at fixed places in the glass, each twinkling at its
@@ -196,13 +197,20 @@ void main() {
           c *= mix(vec3(1.0), 0.55 + hue * 0.9, cColor);
         }
         col += light * c * shape * caustics * 0.9;
+        // On a light page light cannot be brighter than the paper, so the
+        // patch is shaded a little and the bright threads are paper showing through.
+        shade += shape * caustics * 0.3 * (1.0 - clamp(w0, 0.0, 1.0));
       }
     }
   }
 
   col *= shown;
-  float a = clamp(max(col.r, max(col.g, col.b)), 0.0, 1.0) * solid;
-  outColor = vec4(min(col, vec3(1.0)) * mix(1.0, a, step(0.001, solid)), a);
+  if (solid <= 0.0) { outColor = vec4(min(col, vec3(1.0)), 0.0); return; }
+  // Light page: the light is laid on in its own colour, over the shade.
+  col = min(col * 1.6, vec3(1.0));
+  float a = max(col.r, max(col.g, col.b));
+  float sh = clamp(shade * shown, 0.0, 0.6) * (1.0 - a);
+  outColor = vec4(col + vec3(0.2, 0.17, 0.14) * sh, a + sh);
 }`;
 
 const rgbOf = (hex: string): [number, number, number] => {
