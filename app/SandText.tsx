@@ -36,6 +36,7 @@ export type Variant = {
   defaults?: Partial<Settings>;
   backdrop?: React.ReactNode;
   extra?: React.ReactNode; // sections added at the top of the panel
+  sand?: React.ReactNode; // added to the sand section
   scroll?: React.ReactNode; // added to the scroll section
   reset?: React.ReactNode; // added beside the reset button
 };
@@ -831,6 +832,7 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
           {slider("stream", "constant stream", 0, 1, 0.05)}
           {slider("glimmer", "glimmer", 0, 1, 0.05)}
           {slider("grain", "grain size", 0.5, 2, 0.25)}
+          {variant?.sand}
         </Fold>
         <Fold id="scroll" title="scroll">
           {slider("weight", "scroll friction", 0, 1, 0.05)}

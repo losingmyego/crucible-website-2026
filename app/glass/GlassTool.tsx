@@ -360,8 +360,6 @@ export default function GlassTool() {
               {slider("rayLength", "length", 0.2, 2, 0.01)}
               {slider("rayMove", "movement", 0, 4, 0.05)}
               {choice("rayColor", [["white", "white"], ["warm", "warm"]])}
-              {slider("dustEnd", "dust fades out at (cathedral page)", 0, 1, 0.01)}
-              {slider("dustLoose", "dust: funnel (0) to drift (1)", 0, 1, 0.01)}
             </>,
             "rays",
           )}
