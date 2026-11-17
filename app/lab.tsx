@@ -93,6 +93,12 @@ const put = (name: string, value: unknown) => {
     localStorage.setItem(PREFIX + name, JSON.stringify(value));
   } catch {}
 };
+// Sections of the window tool, by the settings each one holds. A star stands for "every setting that starts with this".
+const WINDOW_SECTIONS: Record<string, string[]> = {
+  line: ["soft", "grain", "grainSize", "breaks", "level", "wobble", "wobbleLen", "seed"],
+  winetch: ["winEtch*"],
+  light: ["glassColor", "glass", "light", "clear"],
+};
 // On a working copy every option is kept as it was last left, so settings
 // changed while on an option are still there after switching away and back.
 // The live site never reads these: it shows the built-in options only.
@@ -188,6 +194,29 @@ function boot() {
       if (n === a || n === b) put("option", { n: n === a ? b : a, v: STAMP });
     }
     params.delete("swap");
+    const rest = params.toString();
+    history.replaceState(null, "", window.location.pathname + (rest ? "?" + rest : "") + window.location.hash);
+  }
+  // "?copy=1:line,winetch,light" on a working copy takes those sections of the
+  // window tool from one option and gives them to every other option in this
+  // browser, once. Everything else in the other options is left as it is.
+  const give = (params.get("copy") || "").match(/^(\d+):([a-z,]+)$/);
+  if (give && isWorkingCopy()) {
+    keepWork();
+    const slots = workOrBuiltIn();
+    const from = Number(give[1]) - 1;
+    const source = slots[from]?.window as Record<string, unknown> | undefined;
+    if (source) {
+      const wanted = give[2].split(",").flatMap((name) => WINDOW_SECTIONS[name] || []);
+      const picked = Object.fromEntries(Object.entries(source).filter(([key]) => wanted.some((w) => (w.endsWith("*") ? key.startsWith(w.slice(0, -1)) : key === w))));
+      slots.forEach((slot, i) => {
+        if (i !== from) slot.window = { ...(slot.window as object), ...picked };
+      });
+      put("options", { slots });
+      const n = currentOption();
+      if (n >= 0 && n < slots.length && n !== from) put("window", slots[n].window);
+    }
+    params.delete("copy");
     const rest = params.toString();
     history.replaceState(null, "", window.location.pathname + (rest ? "?" + rest : "") + window.location.hash);
   }
