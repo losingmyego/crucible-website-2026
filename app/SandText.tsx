@@ -729,12 +729,12 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
       autoRaf: true,
       lerp: 0.22 * Math.pow(1 - settings.weight, 1.6) + 0.012,
       wheelMultiplier: settings.speed,
-      touchMultiplier: Math.min(1, settings.speed * 2), // a finger needs a lighter hand than a wheel
+      touchMultiplier: Math.min(1, settings.speed * 3), // a finger needs a lighter hand than a wheel
       // On a touch screen too: without this a phone scrolls in its own way and
       // none of the drag above applies. The page then follows the finger at the
       // same reduced speed, and coasts to a stop with the same weight.
       syncTouch: true,
-      syncTouchLerp: Math.max(0.03, 0.22 * Math.pow(1 - settings.weight, 1.6) + 0.012),
+      syncTouchLerp: Math.max(0.06, 0.22 * Math.pow(1 - settings.weight, 1.6) + 0.012),
     });
     return () => lenis.destroy();
   }, [settings.weight, settings.speed]);
