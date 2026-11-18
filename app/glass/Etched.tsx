@@ -281,7 +281,12 @@ export default function Etched({ outline, look, ink, strength, top, size, scroll
       const curve = outline.spring < -0.2 && outline.spring > -0.98 ? 1 + outline.spring : 0.45;
       gl.uniform4f(U("win"), wx, wy, roomW, roomH);
       gl.uniform1f(U("rise"), Math.min(roomH * 2, Math.max(roomW, curve * roomH * 2)));
-      gl.uniform1f(U("soft"), (look.etchClearSoft ?? 0.45) * roomW);
+      // On a phone the window takes up most of the screen's width, so the soft
+      // edge is kept to half the space left beside the clear room: the
+      // engraving is back to full strength before the edge of the screen.
+      const softSet = (look.etchClearSoft ?? 0.45) * roomW;
+      const soft = window.innerWidth <= 720 ? Math.min(softSet, Math.max(roomW * 0.15, (W / 2 - roomW) * 0.5)) : softSet;
+      gl.uniform1f(U("soft"), soft);
       gl.uniform1f(U("tall"), look.etchSize * H);
       gl.uniform1f(U("eye"), Math.pow(2, (look.etchEye - 0.5) * 3));
       gl.uniform1f(U("px"), dpr);

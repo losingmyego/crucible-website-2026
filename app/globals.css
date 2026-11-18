@@ -770,11 +770,13 @@ body {
   right: 0;
   bottom: 0;
   --rx: var(--scrim-rx);
+  height: var(--scrim-h);
   animation: cathedral-in 2s ease 2s both;
 }
 @media (max-width: 720px) {
   .cathedral .scrim {
     --rx: var(--scrim-rx-phone);
+    height: var(--scrim-h-phone);
   }
 }
 
