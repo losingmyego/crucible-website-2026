@@ -85,6 +85,8 @@ export default function Rays({ outline, look, ink, shade, light: lightColor, top
       if (look.rays <= 0 || sweep <= 0) return;
       // The shafts fan out from a point above the window; at full spread, from the symbol.
       const oy = sill - open * 1.1;
+      // On a phone the shafts fan out a fifth less widely (Neesh, 2026-11-18).
+      const spread = look.raySpread * (window.innerWidth <= 720 ? 0.8 : 1);
       const n = Math.round(look.rayCount);
       for (let k = 0; k < n; k++) {
         const u1 = (rnd(k, 1) * 2 - 1) * 0.96 + Math.sin(time * 0.21 + k * 1.7) * 0.04;
@@ -102,7 +104,7 @@ export default function Rays({ outline, look, ink, shade, light: lightColor, top
         // ...while it grows down from the window.
         const L = H * look.rayLength * (0.55 + 0.9 * rnd(k, 4)) * (0.2 + 0.8 * p);
         const end = (x: number): [number, number] => {
-          const dx = (x - cx) * (1 + look.raySpread * 3.5);
+          const dx = (x - cx) * (1 + spread * 3.5);
           const dy = ys - oy;
           const d = Math.hypot(dx, dy);
           return [x + (dx / d) * L, ys + (dy / d) * L];

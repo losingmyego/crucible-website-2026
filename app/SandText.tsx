@@ -94,6 +94,9 @@ const rampAt = (stops: string[], t: number) => {
 };
 
 // Neesh's settings on the hero as of 2026-11-16.
+// On a phone the sand starts a little lower than it is set (Neesh, 2026-11-18).
+const PHONE_LINE = 0.03;
+const lineOf = (s: { line: number }) => s.line + (typeof window !== "undefined" && window.innerWidth <= 720 ? PHONE_LINE : 0);
 const DEFAULTS: Settings = { start: 0.6, line: 0.53, soft: 30, launch: 1.3, settle: 0.22, rise: 0.25, back: 0.35, density: 0.7, pull: 0.95, stream: 0.2, glimmer: 0.05, grain: 0.5, weight: 0.8, speed: 0.4 };
 
 const MAX = 140_000;
@@ -168,7 +171,7 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
       if (tilt) tilt.style.transform = "none"; // measure the text flat
       const tail = (column.lastElementChild as HTMLElement).getBoundingClientRect().bottom - last.getBoundingClientRect().top;
       if (tilt) tilt.style.transform = was;
-      setEndPad(Math.max(24, Math.round(window.innerHeight * (1 - settings.line) - gap - tail)));
+      setEndPad(Math.max(24, Math.round(window.innerHeight * (1 - lineOf(settings)) - gap - tail)));
     };
     size();
     const seen = new ResizeObserver(size);
@@ -461,14 +464,14 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
       lastScroll = sy;
 
       // Which words have crossed the line?
-      const lineY = sy + vh * s.line;
+      const lineY = sy + vh * lineOf(s);
 
       // Perspective: the text leans back about the sand line, so it is its
       // true size where it turns to sand and a little larger toward the
       // bottom of the screen. The setting is how much larger it is there.
       if (tilt) {
         const more = (parseFloat(document.documentElement.style.getPropertyValue("--text-tilt")) || 0) / 100;
-        const below = Math.max(80, vh * (1 - s.line));
+        const below = Math.max(80, vh * (1 - lineOf(s)));
         if (more > 0) {
           const lean = Math.atan((DEPTH * more) / ((1 + more) * below));
           tilt.style.transformOrigin = `50% ${(lineY - tiltTop).toFixed(1)}px`;
@@ -490,7 +493,7 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
 
       // The funnel is fixed to the window: its mouth is the line where the
       // sand starts, its neck is the top of the window, above the column.
-      const lineScreen = Math.max(1, vh * s.line);
+      const lineScreen = Math.max(1, vh * lineOf(s));
       const neckY = Math.min(lineScreen * 0.85, vh * sandNeck.y);
       const axis = colLeft + colWidth / 2;
       const squeeze = 0.5 + s.pull * 3; // higher = narrows sooner
@@ -726,7 +729,12 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
       autoRaf: true,
       lerp: 0.22 * Math.pow(1 - settings.weight, 1.6) + 0.012,
       wheelMultiplier: settings.speed,
-      touchMultiplier: settings.speed,
+      touchMultiplier: Math.min(1, settings.speed * 2), // a finger needs a lighter hand than a wheel
+      // On a touch screen too: without this a phone scrolls in its own way and
+      // none of the drag above applies. The page then follows the finger at the
+      // same reduced speed, and coasts to a stop with the same weight.
+      syncTouch: true,
+      syncTouchLerp: Math.max(0.03, 0.22 * Math.pow(1 - settings.weight, 1.6) + 0.012),
     });
     return () => lenis.destroy();
   }, [settings.weight, settings.speed]);
