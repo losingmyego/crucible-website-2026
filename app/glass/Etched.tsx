@@ -252,7 +252,10 @@ export default function Etched({ outline, look, ink, strength, top, size, scroll
       const zoom = 1 + (still ? 0 : Math.min(1.2, window.scrollY / window.innerHeight) * scroll * 0.08);
       c.style.transform = `scale(${zoom.toFixed(4)})`;
       if (!ready) return;
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      // A phone's screen is finer than a desktop's (3 to 1), and a picture cut at 2
+      // is stretched to fit it, which smears lines this fine into a haze. So on a
+      // phone it is cut at the screen's own fineness.
+      const dpr = Math.min(window.innerWidth <= 720 ? 3 : 2, window.devicePixelRatio || 1);
       const W = Math.round(window.innerWidth * dpr);
       const H = Math.round(window.innerHeight * dpr);
       const drawn = opening.on ? through("cathedral") : 1;
