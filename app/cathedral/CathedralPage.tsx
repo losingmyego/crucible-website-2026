@@ -68,6 +68,8 @@ const TIMES = '"Times New Roman", Times, serif';
 // The sound starts with the page. A browser will not let a page make sound
 // until the visitor has clicked, tapped or pressed a key, so it waits for the
 // first of those and then fades in. Turning it off is remembered.
+// A tenth of a second of silence, as a sound file.
+const SILENCE = "data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==";
 const SOUND_KEY = "crucible-site:sound";
 function useChant() {
   const [on, setOn] = useState(false);
@@ -91,15 +93,36 @@ function useChant() {
   const start = () => {
     if (stop.current) return;
     const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    // An iPhone treats sound made in the page as a ringtone-like sound and
+    // silences it when the phone's ring switch is on silent. Asking for
+    // "playback" makes it count as music, which plays either way. Older
+    // iPhones have no such setting: there, a silent recording kept playing
+    // does the same job.
+    const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+    let hush: HTMLAudioElement | null = null;
+    if (session) {
+      try {
+        session.type = "playback";
+      } catch {}
+    } else if (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) {
+      hush = new Audio(SILENCE);
+      hush.loop = true;
+      hush.setAttribute("playsinline", "");
+      hush.play().catch(() => {});
+    }
     const ac = new AC();
     const wake = () => {
-      if (ac.state === "suspended") ac.resume();
+      // "interrupted" is an iPhone's state after a call or switching apps.
+      if (ac.state !== "running") ac.resume().catch(() => {});
+      if (hush?.paused) hush.play().catch(() => {});
     };
-    const gestures = ["pointerdown", "keydown", "touchstart"] as const;
+    // An iPhone only lets sound start from the end of a tap, not its start.
+    const gestures = ["pointerdown", "pointerup", "keydown", "touchstart", "touchend", "click"] as const;
     gestures.forEach((g) => window.addEventListener(g, wake, { passive: true }));
     wake();
     const master = ac.createGain();
     master.gain.value = 0;
+    master.gain.setValueAtTime(0, ac.currentTime); // Safari needs a starting point for the fade
     master.gain.linearRampToValueAtTime(0.22, ac.currentTime + 4);
     // A long hall: decaying noise as the echo.
     const len = ac.sampleRate * 6;
@@ -160,6 +183,7 @@ function useChant() {
     stop.current = () => {
       gestures.forEach((g) => window.removeEventListener(g, wake));
       timers.forEach(clearTimeout);
+      hush?.pause();
       master.gain.cancelScheduledValues(ac.currentTime);
       master.gain.setTargetAtTime(0, ac.currentTime, 0.4);
       setTimeout(() => {
