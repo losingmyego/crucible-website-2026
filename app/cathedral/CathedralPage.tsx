@@ -259,7 +259,10 @@ function Backdrop({ look, replay, dust }: { look: Look; replay: number; dust: Du
         <div
           className="scrim"
           style={{
-            height: `${look.scrimHeight * 100}vh`,
+            // Its height: as set, and on a phone no taller than lets its fade end at
+            // the window's sill, so the cathedral's lines still show round the window.
+            ["--scrim-h" as string]: `${look.scrimHeight * 100}vh`,
+            ["--scrim-h-phone" as string]: `${Math.min(look.scrimHeight, Math.max(0.2, 1 - glass.top - glass.size) / Math.max(0.05, Math.max(look.scrimSolid, look.scrimEnd))) * 100}vh`,
             opacity: look.scrim,
             background: scrimPaint(look, paper),
             // The half circle's half width: as set, and on a phone wide enough that
