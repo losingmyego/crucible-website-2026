@@ -485,3 +485,19 @@ html:has(.sys) .panel-toggle {
   min-height: 40px;
   margin-bottom: 6px;
 }
+
+/* ---- Theme switcher: family swatches, then dark / light ---- */
+.sys-looks .sys-toggle {
+  width: auto;
+  padding: 0 12px;
+  height: 26px;
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+.sys-looks .sys-toggle[aria-pressed="true"] {
+  border-color: var(--text-primary);
+}
+.sys-gap-x {
+  width: 10px;
+}

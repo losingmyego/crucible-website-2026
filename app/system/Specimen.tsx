@@ -4,7 +4,7 @@
 // really renders, with its name. Numbers and colours shown here are read
 // back from the page itself, so they always match app/ui/tokens.css.
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowRight,
@@ -21,24 +21,15 @@ import {
   type Icon as PhosphorIcon,
   type IconWeight,
 } from "@phosphor-icons/react";
-import { OPTIONS } from "../options";
 import { Body, Button, Footer, Header, InlineLink, Label, LinkButton, Nav, NAV_ITEMS, NavLink, Subheader, type Size, type State } from "../ui/components";
 import "./specimen.css";
 
-// ---- The homepage looks (Option 1, 2, 3...) give the page and ink colours ----
-const OPTION_NAMES = ["Dark", "Medium", "Light", "Light, brown lines", "Brown", "Olive"];
-type Look = { paper: string; ink: string };
-const LOOKS: Look[] = OPTIONS.map((packed) => {
-  try {
-    const set = JSON.parse(decodeURIComponent(atob(packed)));
-    const name = set.theme?.name ?? "medium";
-    const c = set["colors-home"]?.[name] ?? {};
-    return { paper: c.paper ?? "#6e6a66", ink: c.ink ?? "#d8d8ca" };
-  } catch {
-    return { paper: "#6e6a66", ink: "#d8d8ca" };
-  }
-});
-const LOOK_KEY = "crucible-site:system-look";
+// ---- The theme: a family (which neutral ramp) and a mode (which role map) ----
+const FAMILIES = ["gray", "brown", "umber", "olive"] as const;
+const MODES = ["dark", "light"] as const;
+type Family = (typeof FAMILIES)[number];
+type Mode = (typeof MODES)[number];
+const THEME_KEY = "crucible-site:system-theme";
 
 // ---- Reading values back from the page ----
 const toHex = (css: string) => {
@@ -46,9 +37,9 @@ const toHex = (css: string) => {
   const rgb = css.startsWith("color(") ? n.slice(0, 3).map((v) => v * 255) : n.slice(0, 3);
   return "#" + rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("");
 };
-function readColors(names: string[]) {
+function readColors(names: string[], within: HTMLElement) {
   const probe = document.createElement("span");
-  document.body.appendChild(probe);
+  within.appendChild(probe);
   const out: Record<string, string> = {};
   for (const name of names) {
     probe.style.color = `var(${name})`;
@@ -65,55 +56,55 @@ function readVars(names: string[]) {
 }
 
 // ---- Colour tokens ----
-type Swatch = { name: string; mix: string; use: string };
+type Swatch = { name: string; mix: Record<Mode, string>; use: string };
 const COLOR_GROUPS: { title: string; note?: string; tokens: Swatch[] }[] = [
   {
     title: "Surfaces",
     tokens: [
-      { name: "--surface", mix: "page", use: "The page" },
-      { name: "--surface-raised", mix: "ink 7%", use: "A panel or card lifted off the page" },
-      { name: "--surface-inverse", mix: "ink", use: "Primary button fill" },
+      { name: "--surface", mix: { dark: "neutral-800", light: "neutral-0" }, use: "The page" },
+      { name: "--surface-raised", mix: { dark: "neutral-700", light: "neutral-50" }, use: "A panel or card lifted off the page" },
+      { name: "--surface-inverse", mix: { dark: "neutral-200", light: "neutral-900" }, use: "Primary button fill" },
     ],
   },
   {
     title: "Text",
     tokens: [
-      { name: "--text-primary", mix: "ink", use: "Headers, body, anything read first" },
-      { name: "--text-secondary", mix: "ink 70%", use: "Nav links at rest (the hero's 70%)" },
-      { name: "--text-tertiary", mix: "ink 50%", use: "Captions, small print" },
-      { name: "--text-inverse", mix: "page", use: "Text on a primary button" },
+      { name: "--text-primary", mix: { dark: "neutral-200", light: "neutral-900" }, use: "Headers, body, anything read first" },
+      { name: "--text-secondary", mix: { dark: "neutral-300", light: "neutral-700" }, use: "Nav links at rest (the hero's 70%)" },
+      { name: "--text-tertiary", mix: { dark: "neutral-400", light: "neutral-600" }, use: "Captions, small print" },
+      { name: "--text-inverse", mix: { dark: "neutral-800", light: "neutral-0" }, use: "Text on a primary button" },
     ],
   },
   {
     title: "Disabled",
     tokens: [
-      { name: "--text-disabled", mix: "ink 32%", use: "Text and icons you can't use" },
-      { name: "--surface-disabled", mix: "ink 12%", use: "A primary button you can't use" },
+      { name: "--text-disabled", mix: { dark: "neutral-500", light: "neutral-400" }, use: "Text and icons you can't use" },
+      { name: "--surface-disabled", mix: { dark: "neutral-700", light: "neutral-100" }, use: "A primary button you can't use" },
     ],
   },
   {
     title: "Lines",
     tokens: [
-      { name: "--line", mix: "ink 22%", use: "Dividers, disabled outlines" },
-      { name: "--line-strong", mix: "ink 50%", use: "Outlines, link underlines" },
+      { name: "--line", mix: { dark: "neutral-600", light: "neutral-200" }, use: "Dividers, disabled outlines" },
+      { name: "--line-strong", mix: { dark: "neutral-500", light: "neutral-400" }, use: "Outlines, link underlines" },
     ],
   },
   {
     title: "States",
     note: "What hover and press lay on top.",
     tokens: [
-      { name: "--surface-hover", mix: "ink 9%", use: "Secondary button, hovered" },
-      { name: "--surface-pressed", mix: "ink 16%", use: "Secondary button, pressed" },
-      { name: "--surface-inverse-hover", mix: "ink 86%", use: "Primary button, hovered" },
-      { name: "--surface-inverse-pressed", mix: "ink 72%", use: "Primary button, pressed" },
+      { name: "--surface-hover", mix: { dark: "neutral-700", light: "neutral-50" }, use: "Secondary button, hovered" },
+      { name: "--surface-pressed", mix: { dark: "neutral-600", light: "neutral-100" }, use: "Secondary button, pressed" },
+      { name: "--surface-inverse-hover", mix: { dark: "neutral-300", light: "neutral-800" }, use: "Primary button, hovered" },
+      { name: "--surface-inverse-pressed", mix: { dark: "neutral-400", light: "neutral-700" }, use: "Primary button, pressed" },
     ],
   },
   {
     title: "Accent",
     note: "Used only for the keyboard focus ring so far.",
     tokens: [
-      { name: "--accent", mix: "#B95B34", use: "Burnt orange, the main accent (kit D10a)" },
-      { name: "--focus", mix: "accent", use: "Focus ring" },
+      { name: "--accent", mix: { dark: "#B95B34", light: "#B95B34" }, use: "Burnt orange, the main accent (kit D10a)" },
+      { name: "--focus", mix: { dark: "accent", light: "accent" }, use: "Focus ring" },
     ],
   },
 ];
@@ -312,37 +303,37 @@ function StateTable({
 }
 
 export default function Specimen() {
-  const [look, setLook] = useState(0);
+  const [family, setFamily] = useState<Family>("gray");
+  const [mode, setMode] = useState<Mode>("dark");
   const [hex, setHex] = useState<Record<string, string>>({});
   const [vars, setVars] = useState<Record<string, string>>({});
   const [weight, setWeight] = useState<IconWeight>("regular");
   const [menuOpen, setMenuOpen] = useState(false);
+  const page = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try {
-      const saved = Number(localStorage.getItem(LOOK_KEY));
-      if (saved > 0 && saved < LOOKS.length) setLook(saved);
+      const [f, m] = (localStorage.getItem(THEME_KEY) ?? "").split(":");
+      if (FAMILIES.includes(f as Family)) setFamily(f as Family);
+      if (MODES.includes(m as Mode)) setMode(m as Mode);
     } catch {}
   }, []);
 
-  // Put the chosen look's page and ink on the page, then read every token back.
+  // The family and mode sit on this page's root (data-family, data-mode), so
+  // every token inside follows them. Then read every token back.
   useLayoutEffect(() => {
-    const l = LOOKS[look] ?? LOOKS[0];
-    if (!l) return;
-    const root = document.documentElement.style;
-    root.setProperty("--paper", l.paper);
-    root.setProperty("--ink", l.ink);
-    setHex(readColors(ALL_COLORS));
+    if (!page.current) return;
+    setHex(readColors(ALL_COLORS, page.current));
     setVars(readVars(TYPE_VARS));
     try {
-      localStorage.setItem(LOOK_KEY, String(look));
+      localStorage.setItem(THEME_KEY, `${family}:${mode}`);
     } catch {}
-  }, [look]);
+  }, [family, mode]);
 
   const v = (name: string) => vars[name] ?? "";
 
   return (
-    <div className="sys">
+    <div className="sys" ref={page} data-family={family} data-mode={mode}>
       {/* ---- Top bar ---- */}
       <div className="sys-bar">
         <div className="sys-title">
@@ -351,14 +342,20 @@ export default function Specimen() {
             Design system
           </Label>
         </div>
-        <div className="sys-looks" role="group" aria-label="Homepage look">
+        <div className="sys-looks" role="group" aria-label="Theme">
           <Label size="s" className="sys-dim">
-            Look
+            Family
           </Label>
-          {LOOKS.map((l, i) => (
-            <button key={i} aria-pressed={i === look} onClick={() => setLook(i)} title={`Option ${i + 1}: ${OPTION_NAMES[i] ?? ""}`}>
-              <i style={{ background: l.paper, boxShadow: `inset 0 0 0 4px ${l.paper}, inset 0 0 0 9px ${l.ink}` }} />
-              <span>{i + 1}</span>
+          {FAMILIES.map((f) => (
+            <button key={f} aria-pressed={f === family} onClick={() => setFamily(f)} title={f}>
+              <i style={{ background: `var(--color-${f}-${mode === "dark" ? 800 : 0})`, boxShadow: `inset 0 0 0 4px var(--color-${f}-${mode === "dark" ? 800 : 0}), inset 0 0 0 9px var(--color-${f}-${mode === "dark" ? 200 : 900})` }} />
+              <span>{f}</span>
+            </button>
+          ))}
+          <span className="sys-gap-x" />
+          {MODES.map((m) => (
+            <button key={m} className="sys-toggle" aria-pressed={m === mode} onClick={() => setMode(m)}>
+              {m}
             </button>
           ))}
         </div>
@@ -370,15 +367,15 @@ export default function Specimen() {
             Website design system
           </Header>
           <Body size="m">
-            Every colour, size and component the site uses, shown as it renders. Switch the look at the top right to see the system in each homepage Option: every colour
-            is mixed from that look&apos;s page and ink, so nothing needs redoing per look. Values live in app/ui/tokens.css.
+            Every colour, size and component the site uses, shown as it renders. Switch the family (gray, brown, umber, olive) and the mode (dark, light) at the top right: every
+            colour is a step on the family&apos;s 0 to 900 ramp, so nothing needs redoing per theme. Values live in app/ui/tokens.css.
           </Body>
         </section>
 
         {/* ---- 01 Colour ---- */}
         <section>
           <SectionHead n="01" title="Colour">
-            Each token is the look&apos;s ink mixed into its page colour by a set amount, so it stays solid and stays in the family. The percentages are the dial.
+            Each token names a step on the active family&apos;s ramp, one map for dark and one for light. Change the step in the map and every component follows.
           </SectionHead>
           <div className="sys-color-groups">
             {COLOR_GROUPS.map((g) => (
@@ -397,7 +394,7 @@ export default function Specimen() {
                       </div>
                       <Label size="s">{t.name.slice(2)}</Label>
                       <span className="sys-meta">
-                        {hex[t.name] ?? ""} · {t.mix}
+                        {hex[t.name] ?? ""} · {t.mix[mode]}
                       </span>
                       <span className="sys-use">{t.use}</span>
                     </div>
