@@ -121,7 +121,7 @@
   --color-neutral-900: var(--color-olive-900);
 }
 /* ---- Role map: dark ---- */
-:root, [data-mode="dark"] {
+:root, [data-mode="dark"], [data-family] {
   --surface: var(--color-neutral-800);
   --surface-raised: var(--color-neutral-700);
   --surface-hover: var(--color-neutral-700);
@@ -139,7 +139,7 @@
   --line-strong: var(--color-neutral-500);
 }
 /* ---- Role map: light ---- */
-[data-mode="light"] {
+[data-mode="light"], [data-mode="light"] [data-family] {
   --surface: var(--color-neutral-0);
   --surface-raised: var(--color-neutral-50);
   --surface-hover: var(--color-neutral-50);
