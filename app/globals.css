@@ -1,5 +1,7 @@
 /* Brand kit values (a copy of the kit's generated tokens.css). */
 @import "./tokens.css";
+/* The website's own design tokens (surfaces, text, type sizes): see /system. */
+@import "./ui/tokens.css";
 
 /* JetBrains Mono, copied unchanged from the kit's assets/fonts. */
 /* Semplicita, the brand face, from the Brand 2.0 fonts folder. */

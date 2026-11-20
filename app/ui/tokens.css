@@ -1,0 +1,91 @@
+/* ==========================================================================
+   Crucible website: design tokens
+   --------------------------------------------------------------------------
+   One place for every colour, typeface and size the site's components use.
+   Edit a value here and every component, and the /system page, follows.
+
+   Colour is built from the two colours each homepage look picks:
+   --paper (the page) and --ink (the lines and text). So the tokens work in
+   every Option on the live site. A token that is "ink 70%" is ink mixed
+   70% into the page colour: a solid colour, not a see-through one.
+
+   This lives in the website for now. Once it is final it can move into the
+   brand kit.
+   ========================================================================== */
+
+:root {
+  /* ---- Surfaces ---- */
+  --surface: var(--paper); /* the page */
+  --surface-raised: color-mix(in srgb, var(--ink) 7%, var(--paper)); /* a panel or card lifted off the page */
+  --surface-inverse: var(--ink); /* the fill of a primary button */
+
+  /* ---- Text ---- */
+  --text-primary: var(--ink); /* headers, body, anything you read first */
+  --text-secondary: color-mix(in srgb, var(--ink) 70%, var(--paper)); /* nav links at rest (the hero's 70%) */
+  --text-tertiary: color-mix(in srgb, var(--ink) 50%, var(--paper)); /* captions, small print */
+  --text-inverse: var(--paper); /* text on a primary button */
+
+  /* ---- Disabled ---- */
+  --text-disabled: color-mix(in srgb, var(--ink) 32%, var(--paper));
+  --surface-disabled: color-mix(in srgb, var(--ink) 12%, var(--paper));
+
+  /* ---- Lines ---- */
+  --line: color-mix(in srgb, var(--ink) 22%, var(--paper)); /* dividers */
+  --line-strong: color-mix(in srgb, var(--ink) 50%, var(--paper)); /* outlines, link underlines */
+
+  /* ---- States (what hover and press add on top) ---- */
+  --surface-hover: color-mix(in srgb, var(--ink) 9%, var(--paper));
+  --surface-pressed: color-mix(in srgb, var(--ink) 16%, var(--paper));
+  --surface-inverse-hover: color-mix(in srgb, var(--ink) 86%, var(--paper));
+  --surface-inverse-pressed: color-mix(in srgb, var(--ink) 72%, var(--paper));
+
+  /* ---- Accent ---- */
+  --accent: #b95b34; /* Burnt orange, the brand's main accent (kit D10a) */
+  --focus: var(--accent); /* the ring that shows where the keyboard is */
+
+  /* ---- Typefaces ---- */
+  --face-header: "Semplicita Pro", serif;
+  --face-subheader: "Asta Sans Variable", system-ui, sans-serif;
+  --face-body: "Asta Sans Variable", system-ui, sans-serif; /* the hero's text face */
+  --face-label: "JetBrains Mono", ui-monospace, monospace;
+
+  /* ---- Headers ---- */
+  --header-xl: 72px;
+  --header-l: 56px;
+  --header-m: 40px;
+  --header-s: 32px;
+  --header-weight: 400;
+  --header-line: 1.08;
+  --header-track: -0.01em;
+
+  /* ---- Subheaders: always smaller than the smallest header ---- */
+  --subheader-xl: 26px;
+  --subheader-l: 22px;
+  --subheader-m: 19px;
+  --subheader-s: 17px;
+  --subheader-weight: 400;
+  --subheader-line: 1.35;
+  --subheader-track: -0.005em;
+
+  /* ---- Body (M is the homepage text: 15px, light, double spaced) ---- */
+  --body-xl: 20px;
+  --body-l: 17px;
+  --body-m: 15px;
+  --body-s: 13px;
+  --body-weight: 350;
+  --body-line: 2;
+  --body-track: -0.2px;
+
+  /* ---- Labels: JetBrains Mono, all caps, 100% line height, wide spacing ---- */
+  --label-xl: 14px;
+  --label-l: 12px;
+  --label-m: 11px;
+  --label-s: 10px;
+  --label-line: 1;
+  --label-spacing: 0.22em; /* the spacing on "Enter" and "Coming soon" */
+
+  /* ---- Icons (Phosphor) ---- */
+  --icon-s: 16px;
+  --icon-m: 20px;
+  --icon-l: 24px;
+}
