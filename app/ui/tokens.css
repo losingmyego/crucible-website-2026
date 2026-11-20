@@ -84,6 +84,10 @@
   --label-line: 1;
   --label-spacing: 0.22em; /* the spacing on "Enter" and "Coming soon" */
 
+  /* ---- Buttons (Neesh, 2026-11-20: square corners, 32px tall) ---- */
+  --button-height: 32px;
+  --button-radius: 0px;
+
   /* ---- Icons (Phosphor) ---- */
   --icon-s: 16px;
   --icon-m: 20px;

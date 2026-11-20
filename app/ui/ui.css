@@ -66,10 +66,10 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  height: 40px;
+  height: var(--button-height);
   padding: 0 20px;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--button-radius);
   font-family: var(--face-label);
   font-size: var(--label-m);
   line-height: var(--label-line);

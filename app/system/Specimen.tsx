@@ -472,7 +472,7 @@ export default function Specimen() {
         {/* ---- 03 Buttons ---- */}
         <section>
           <SectionHead n="03" title="Buttons">
-            Two styles. Both use Label M type in a pill, 40px tall. The column you are acting on in &quot;Try it&quot; lights up.
+            Two styles. Both use Label M type, square corners, 32px tall. The column you are acting on in &quot;Try it&quot; lights up.
           </SectionHead>
           <StateTable name="Primary button" spec={SPECS.primary} hex={hex} render={(s) => <Button kind="primary" state={s} disabled={s === "disabled"}>Primary</Button>} />
           <StateTable
