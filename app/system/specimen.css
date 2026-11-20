@@ -461,3 +461,27 @@ html:has(.sys) .panel-toggle {
     gap: 14px;
   }
 }
+
+/* ---- Button sizes ---- */
+.sys-sizes {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.sys-sizes-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 56px;
+}
+.sys-size {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+.sys-size-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  margin-bottom: 6px;
+}

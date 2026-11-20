@@ -87,6 +87,9 @@
   /* ---- Buttons (Neesh, 2026-11-20: square corners, 32px tall) ---- */
   --button-height: 32px;
   --button-radius: 0px;
+  --button-height-s: 24px; /* small size (Neesh, 2026-11-20): tighter padding, Label S type */
+  --button-padding: 20px;
+  --button-padding-s: 12px;
 
   /* ---- Icons (Phosphor) ---- */
   --icon-s: 16px;

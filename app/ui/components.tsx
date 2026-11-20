@@ -32,6 +32,7 @@ export function Label({ size = "m", children, className = "" }: { size?: Size; c
 // ---- Buttons ----
 export function Button({
   kind = "primary",
+  size = "m",
   children,
   icon,
   disabled,
@@ -39,6 +40,7 @@ export function Button({
   onClick,
 }: {
   kind?: "primary" | "secondary";
+  size?: "m" | "s"; // s: 24px tall, tighter padding
   children: React.ReactNode;
   icon?: React.ReactNode;
   disabled?: boolean;
@@ -46,7 +48,7 @@ export function Button({
   onClick?: () => void;
 }) {
   return (
-    <button className={`ui-button ${kind}`} disabled={disabled} onClick={onClick} {...held(state)}>
+    <button className={`ui-button ${kind}${size === "s" ? " small" : ""}`} disabled={disabled} onClick={onClick} {...held(state)}>
       {children}
       {icon}
     </button>

@@ -67,7 +67,7 @@
   justify-content: center;
   gap: 10px;
   height: var(--button-height);
-  padding: 0 20px;
+  padding: 0 var(--button-padding);
   border: 1px solid transparent;
   border-radius: var(--button-radius);
   font-family: var(--face-label);
@@ -85,6 +85,20 @@
   width: var(--icon-s);
   height: var(--icon-s);
   flex: none;
+}
+.ui-button.small {
+  gap: 6px;
+  height: var(--button-height-s);
+  padding: 0 var(--button-padding-s);
+  font-size: var(--label-s);
+}
+.ui-button.small svg {
+  width: 12px;
+  height: 12px;
+}
+.ui-button.small,
+.ui-button.small:focus-visible {
+  outline-offset: 2px;
 }
 .ui-button:focus-visible,
 .ui-button[data-state="focus"] {

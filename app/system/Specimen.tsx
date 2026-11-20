@@ -187,6 +187,10 @@ const TYPE_VARS = [
   "--body-track",
   "--label-line",
   "--label-spacing",
+  "--button-height",
+  "--button-height-s",
+  "--button-padding",
+  "--button-padding-s",
   "--icon-s",
   "--icon-m",
   "--icon-l",
@@ -472,7 +476,7 @@ export default function Specimen() {
         {/* ---- 03 Buttons ---- */}
         <section>
           <SectionHead n="03" title="Buttons">
-            Two styles. Both use Label M type, square corners, 32px tall. The column you are acting on in &quot;Try it&quot; lights up.
+            Two styles in two sizes, with square corners. Medium is 32px tall with Label M type; small is 24px with Label S. The column you are acting on in &quot;Try it&quot; lights up.
           </SectionHead>
           <StateTable name="Primary button" spec={SPECS.primary} hex={hex} render={(s) => <Button kind="primary" state={s} disabled={s === "disabled"}>Primary</Button>} />
           <StateTable
@@ -485,6 +489,30 @@ export default function Specimen() {
               </Button>
             )}
           />
+          <div className="sys-sizes">
+            <Label size="m">Sizes</Label>
+            <div className="sys-sizes-row">
+              {(["m", "s"] as const).map((sz) => (
+                <div key={sz} className="sys-size">
+                  <div className="sys-size-buttons">
+                    <Button kind="primary" size={sz}>
+                      Primary
+                    </Button>
+                    <Button kind="secondary" size={sz}>
+                      Secondary
+                    </Button>
+                  </div>
+                  <Label size="s">{sz === "m" ? "Medium (default)" : "Small"}</Label>
+                  <span className="sys-meta">
+                    {sz === "m"
+                      ? `button-height ${v("--button-height")} · padding ${v("--button-padding")} · label-m`
+                      : `button-height-s ${v("--button-height-s")} · padding ${v("--button-padding-s")} · label-s`}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="sys-hint">Both sizes use the same colours in every state, shown in the tables above.</p>
+          </div>
         </section>
 
         {/* ---- 04 Links ---- */}
