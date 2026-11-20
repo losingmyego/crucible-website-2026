@@ -1,0 +1,454 @@
+/* ==========================================================================
+   Crucible website: components
+   --------------------------------------------------------------------------
+   Every colour, face and size here comes from app/ui/tokens.css.
+   Each interactive state is written twice: once for the real thing (:hover,
+   :active, :focus-visible, :disabled) and once as [data-state="..."] so the
+   /system page can hold a component in that state to look at.
+   ========================================================================== */
+
+/* ---- Type ---- */
+.t-header {
+  margin: 0;
+  font-family: var(--face-header);
+  font-weight: var(--header-weight);
+  line-height: var(--header-line);
+  letter-spacing: var(--header-track);
+  color: var(--text-primary);
+}
+.t-header.xl { font-size: var(--header-xl); }
+.t-header.l { font-size: var(--header-l); }
+.t-header.m { font-size: var(--header-m); }
+.t-header.s { font-size: var(--header-s); }
+
+.t-subheader {
+  margin: 0;
+  font-family: var(--face-subheader);
+  font-weight: var(--subheader-weight);
+  line-height: var(--subheader-line);
+  letter-spacing: var(--subheader-track);
+  color: var(--text-primary);
+}
+.t-subheader.xl { font-size: var(--subheader-xl); }
+.t-subheader.l { font-size: var(--subheader-l); }
+.t-subheader.m { font-size: var(--subheader-m); }
+.t-subheader.s { font-size: var(--subheader-s); }
+
+.t-body {
+  margin: 0;
+  font-family: var(--face-body);
+  font-weight: var(--body-weight);
+  line-height: var(--body-line);
+  letter-spacing: var(--body-track);
+  color: var(--text-primary);
+}
+.t-body.xl { font-size: var(--body-xl); }
+.t-body.l { font-size: var(--body-l); }
+.t-body.m { font-size: var(--body-m); }
+.t-body.s { font-size: var(--body-s); }
+
+.t-label {
+  margin: 0;
+  font-family: var(--face-label);
+  font-weight: 400;
+  line-height: var(--label-line);
+  letter-spacing: var(--label-spacing);
+  text-transform: uppercase;
+}
+.t-label.xl { font-size: var(--label-xl); }
+.t-label.l { font-size: var(--label-l); }
+.t-label.m { font-size: var(--label-m); }
+.t-label.s { font-size: var(--label-s); }
+
+/* ---- Buttons: two styles, primary (filled) and secondary (outlined) ---- */
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: var(--button-height);
+  padding: 0 var(--button-padding);
+  border: 1px solid transparent;
+  border-radius: var(--button-radius);
+  font-family: var(--face-label);
+  font-size: var(--label-m);
+  line-height: var(--label-line);
+  letter-spacing: var(--label-spacing);
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  outline: 2px solid transparent;
+  outline-offset: 3px;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, outline-color 0.15s ease;
+}
+.ui-button svg {
+  width: var(--icon-s);
+  height: var(--icon-s);
+  flex: none;
+}
+.ui-button.small {
+  gap: 6px;
+  height: var(--button-height-s);
+  padding: 0 var(--button-padding-s);
+  font-size: var(--label-s);
+}
+.ui-button.small svg {
+  width: 12px;
+  height: 12px;
+}
+.ui-button.small,
+.ui-button.small:focus-visible {
+  outline-offset: 2px;
+}
+.ui-button:focus-visible,
+.ui-button[data-state="focus"] {
+  outline-color: var(--focus);
+}
+.ui-button:disabled,
+.ui-button[data-state="disabled"] {
+  cursor: default;
+}
+
+.ui-button.primary {
+  background: var(--surface-inverse);
+  border-color: var(--surface-inverse);
+  color: var(--text-inverse);
+}
+.ui-button.primary:not(:disabled):hover,
+.ui-button.primary[data-state="hover"] {
+  background: var(--surface-inverse-hover);
+  border-color: var(--surface-inverse-hover);
+}
+.ui-button.primary:not(:disabled):active,
+.ui-button.primary[data-state="pressed"] {
+  background: var(--surface-inverse-pressed);
+  border-color: var(--surface-inverse-pressed);
+}
+.ui-button.primary:disabled,
+.ui-button.primary[data-state="disabled"] {
+  background: var(--surface-disabled);
+  border-color: var(--surface-disabled);
+  color: var(--text-disabled);
+}
+
+.ui-button.secondary {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--text-primary);
+}
+.ui-button.secondary:not(:disabled):hover,
+.ui-button.secondary[data-state="hover"] {
+  background: var(--surface-hover);
+  border-color: var(--text-primary);
+}
+.ui-button.secondary:not(:disabled):active,
+.ui-button.secondary[data-state="pressed"] {
+  background: var(--surface-pressed);
+  border-color: var(--text-primary);
+}
+.ui-button.secondary:disabled,
+.ui-button.secondary[data-state="disabled"] {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--text-disabled);
+}
+
+/* ---- Link button: a label with an underline and an arrow ---- */
+.ui-link-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 7px;
+  border-bottom: 1px solid var(--line-strong);
+  color: var(--text-primary);
+  background: none;
+  font-family: var(--face-label);
+  font-size: var(--label-m);
+  line-height: var(--label-line);
+  letter-spacing: var(--label-spacing);
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  outline: 2px solid transparent;
+  outline-offset: 4px;
+  transition: border-color 0.25s ease, color 0.25s ease, outline-color 0.15s ease;
+}
+.ui-link-button svg {
+  width: var(--icon-s);
+  height: var(--icon-s);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ui-link-button:hover,
+.ui-link-button[data-state="hover"] {
+  border-bottom-color: var(--text-primary);
+}
+.ui-link-button:hover svg,
+.ui-link-button[data-state="hover"] svg {
+  transform: translateX(3px);
+}
+.ui-link-button:active,
+.ui-link-button[data-state="pressed"] {
+  color: var(--text-secondary);
+  border-bottom-color: var(--text-secondary);
+}
+.ui-link-button:focus-visible,
+.ui-link-button[data-state="focus"] {
+  outline-color: var(--focus);
+}
+.ui-link-button[aria-disabled="true"],
+.ui-link-button[data-state="disabled"] {
+  color: var(--text-disabled);
+  border-bottom-color: var(--line);
+  pointer-events: none;
+}
+.ui-link-button[aria-disabled="true"] svg,
+.ui-link-button[data-state="disabled"] svg {
+  transform: none;
+}
+
+/* ---- Inline link: inside a line of body text ---- */
+.ui-link {
+  color: var(--text-primary);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.28em;
+  text-decoration-color: var(--line-strong);
+  border-radius: 2px;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: text-decoration-color 0.25s ease, color 0.25s ease, outline-color 0.15s ease;
+}
+.ui-link:hover,
+.ui-link[data-state="hover"] {
+  text-decoration-color: var(--text-primary);
+}
+.ui-link:active,
+.ui-link[data-state="pressed"] {
+  color: var(--text-secondary);
+  text-decoration-color: var(--text-secondary);
+}
+.ui-link:focus-visible,
+.ui-link[data-state="focus"] {
+  outline-color: var(--focus);
+}
+.ui-link[aria-disabled="true"],
+.ui-link[data-state="disabled"] {
+  color: var(--text-disabled);
+  text-decoration-color: var(--line);
+  pointer-events: none;
+}
+
+/* ---- Navigation ----
+   One component for every screen size. It switches to the phone layout by
+   the width of the box it sits in (a container query), so the /system page
+   can show both side by side. */
+.ui-nav-frame {
+  container-type: inline-size;
+  container-name: nav;
+  position: relative;
+}
+.ui-nav {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  padding: 18px 24px;
+  color: var(--text-primary);
+}
+.ui-nav.fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 70;
+}
+.ui-nav .ui-wordmark {
+  flex: none;
+}
+.ui-nav-links {
+  display: flex;
+  gap: 28px;
+}
+.ui-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-family: var(--face-label);
+  font-size: var(--label-l);
+  line-height: var(--label-line);
+  letter-spacing: var(--label-spacing);
+  text-transform: uppercase;
+  border-radius: 2px;
+  outline: 2px solid transparent;
+  outline-offset: 4px;
+  transition: color 0.3s ease, outline-color 0.15s ease;
+}
+.ui-nav-link svg {
+  width: 12px;
+  height: 12px;
+}
+.ui-nav-link:hover,
+.ui-nav-link[data-state="hover"],
+.ui-nav-link[aria-current="page"] {
+  color: var(--text-primary);
+}
+.ui-nav-link:focus-visible,
+.ui-nav-link[data-state="focus"] {
+  outline-color: var(--focus);
+}
+.ui-nav-link:active,
+.ui-nav-link[data-state="pressed"] {
+  color: var(--text-tertiary);
+}
+
+.ui-menu-button {
+  display: none;
+  margin-left: auto;
+  width: 40px;
+  height: 40px;
+  margin-right: -10px;
+  padding: 0;
+  place-items: center;
+  color: var(--text-primary);
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  outline: 2px solid transparent;
+  outline-offset: 0;
+}
+.ui-menu-button:focus-visible {
+  outline-color: var(--focus);
+}
+.ui-menu-button svg {
+  width: var(--icon-m);
+  height: var(--icon-m);
+}
+.ui-menu-sheet {
+  display: none;
+}
+
+@container nav (max-width: 720px) {
+  .ui-nav {
+    padding: 14px 16px;
+  }
+  .ui-nav-links {
+    display: none;
+  }
+  .ui-menu-button {
+    display: grid;
+  }
+  .ui-menu-sheet {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    padding: 84px 16px 24px;
+    background: var(--surface);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s;
+  }
+  .ui-menu-sheet.open {
+    opacity: 1;
+    visibility: visible;
+  }
+  .ui-menu-sheet .ui-nav-link {
+    font-size: var(--label-xl);
+    color: var(--text-primary);
+  }
+  .ui-menu-sheet .ui-nav-link[aria-current="page"]::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    margin-right: 8px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+}
+/* On the real site the sheet covers the whole screen. */
+.ui-nav-frame.page .ui-menu-sheet {
+  position: fixed;
+}
+
+/* ---- Brand marks drawn in the current ink ---- */
+.ui-wordmark,
+.ui-symbol {
+  color: inherit;
+}
+.ui-wordmark {
+  --h: 12px;
+  --s: calc(var(--h) / 59.15);
+  display: block;
+  width: calc(400 * var(--s));
+  height: var(--h);
+  background: currentColor;
+  -webkit-mask: url(/mark/wordmark-light.svg) 0 calc(-170 * var(--s)) / calc(400 * var(--s)) calc(400 * var(--s)) no-repeat;
+  mask: url(/mark/wordmark-light.svg) 0 calc(-170 * var(--s)) / calc(400 * var(--s)) calc(400 * var(--s)) no-repeat;
+}
+.ui-symbol {
+  display: block;
+  width: 28px;
+  height: 28px;
+  background: currentColor;
+  -webkit-mask: url(/mark/symbol-light.svg) center / contain no-repeat;
+  mask: url(/mark/symbol-light.svg) center / contain no-repeat;
+}
+
+/* ---- Footer: a first sketch, to react to ---- */
+.ui-footer-frame {
+  container-type: inline-size;
+  container-name: footer;
+}
+.ui-footer {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 40px;
+  padding: 28px 24px;
+  border-top: 1px solid var(--line);
+  color: var(--text-primary);
+}
+.ui-footer .ui-nav-links {
+  display: flex;
+}
+.ui-footer .small {
+  color: var(--text-tertiary);
+}
+@container footer (max-width: 720px) {
+  .ui-footer {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 28px 16px 32px;
+  }
+  .ui-footer .ui-nav-links {
+    flex-direction: column;
+    gap: 18px;
+  }
+}
+
+/* ---- Icons ---- */
+.ui-icon {
+  display: inline-block;
+  flex: none;
+  color: currentColor;
+}
+.ui-icon.s { width: var(--icon-s); height: var(--icon-s); }
+.ui-icon.m { width: var(--icon-m); height: var(--icon-m); }
+.ui-icon.l { width: var(--icon-l); height: var(--icon-l); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-button,
+  .ui-link-button,
+  .ui-link-button svg,
+  .ui-link,
+  .ui-nav-link,
+  .ui-menu-sheet {
+    transition: none;
+  }
+}

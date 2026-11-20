@@ -1,0 +1,217 @@
+/* ==========================================================================
+   Crucible website: design tokens
+   --------------------------------------------------------------------------
+   One place for every colour, typeface and size the site's components use.
+   Edit a value here and every component, and the /system page, follows.
+
+   Colour comes in three layers:
+   1. Primitives: one 0-900 ramp per family (gray, brown, umber, olive),
+      the same values as Paper and the brand kit.
+   2. neutral-*: the active family. Gray by default; data-family="brown"
+      (or umber, olive) on any element re-points it for everything inside.
+   3. Roles (surface, text, line, button states): each one names a neutral
+      step. One map for dark, one for light; data-mode="light" switches.
+   The homepage hero keeps its own --paper and --ink (app/options.ts) until
+   Meltem picks a look; that pick then becomes a family + mode here.
+
+   This lives in the website for now. Once it is final it can move into the
+   brand kit.
+   ========================================================================== */
+
+/* ---- Primitives: one 0-900 ramp per family (same values as Paper and kit PR #7) ---- */
+:root {
+  --color-gray-0: #FBFBF9;
+  --color-gray-50: #F5F5F1;
+  --color-gray-100: #EDEDE8;
+  --color-gray-200: #CCCBC3;
+  --color-gray-300: #B1AEA6;
+  --color-gray-400: #97938B;
+  --color-gray-500: #7C7871;
+  --color-gray-600: #615E58;
+  --color-gray-700: #454342;
+  --color-gray-800: #2F2F2D;
+  --color-gray-900: #1A1A17;
+
+  --color-brown-0: #FFFAF5;
+  --color-brown-50: #FCF4EC;
+  --color-brown-100: #F6EBE0;
+  --color-brown-200: #D2CAC1;
+  --color-brown-300: #B7ADA2;
+  --color-brown-400: #9D9184;
+  --color-brown-500: #837669;
+  --color-brown-600: #695D4F;
+  --color-brown-700: #4F4438;
+  --color-brown-800: #362E24;
+  --color-brown-900: #1D1914;
+
+  --color-umber-0: #FEFAF7;
+  --color-umber-50: #FAF4EF;
+  --color-umber-100: #F4EBE4;
+  --color-umber-200: #D8C8BA;
+  --color-umber-300: #C2AB92;
+  --color-umber-400: #A98E72;
+  --color-umber-500: #8F7355;
+  --color-umber-600: #755A3B;
+  --color-umber-700: #5A4123;
+  --color-umber-800: #3E2B14;
+  --color-umber-900: #221809;
+
+  --color-olive-0: #FDFBF5;
+  --color-olive-50: #F9F5EC;
+  --color-olive-100: #F2ECDF;
+  --color-olive-200: #D2CBB2;
+  --color-olive-300: #B5B088;
+  --color-olive-400: #99946D;
+  --color-olive-500: #7E7956;
+  --color-olive-600: #636042;
+  --color-olive-700: #4A472F;
+  --color-olive-800: #322F1F;
+  --color-olive-900: #1B1A0F;
+
+  /* neutral-* = the active family. Default gray. */
+  --color-neutral-0: var(--color-gray-0);
+  --color-neutral-50: var(--color-gray-50);
+  --color-neutral-100: var(--color-gray-100);
+  --color-neutral-200: var(--color-gray-200);
+  --color-neutral-300: var(--color-gray-300);
+  --color-neutral-400: var(--color-gray-400);
+  --color-neutral-500: var(--color-gray-500);
+  --color-neutral-600: var(--color-gray-600);
+  --color-neutral-700: var(--color-gray-700);
+  --color-neutral-800: var(--color-gray-800);
+  --color-neutral-900: var(--color-gray-900);
+}
+[data-family="brown"] {
+  --color-neutral-0: var(--color-brown-0);
+  --color-neutral-50: var(--color-brown-50);
+  --color-neutral-100: var(--color-brown-100);
+  --color-neutral-200: var(--color-brown-200);
+  --color-neutral-300: var(--color-brown-300);
+  --color-neutral-400: var(--color-brown-400);
+  --color-neutral-500: var(--color-brown-500);
+  --color-neutral-600: var(--color-brown-600);
+  --color-neutral-700: var(--color-brown-700);
+  --color-neutral-800: var(--color-brown-800);
+  --color-neutral-900: var(--color-brown-900);
+}
+[data-family="umber"] {
+  --color-neutral-0: var(--color-umber-0);
+  --color-neutral-50: var(--color-umber-50);
+  --color-neutral-100: var(--color-umber-100);
+  --color-neutral-200: var(--color-umber-200);
+  --color-neutral-300: var(--color-umber-300);
+  --color-neutral-400: var(--color-umber-400);
+  --color-neutral-500: var(--color-umber-500);
+  --color-neutral-600: var(--color-umber-600);
+  --color-neutral-700: var(--color-umber-700);
+  --color-neutral-800: var(--color-umber-800);
+  --color-neutral-900: var(--color-umber-900);
+}
+[data-family="olive"] {
+  --color-neutral-0: var(--color-olive-0);
+  --color-neutral-50: var(--color-olive-50);
+  --color-neutral-100: var(--color-olive-100);
+  --color-neutral-200: var(--color-olive-200);
+  --color-neutral-300: var(--color-olive-300);
+  --color-neutral-400: var(--color-olive-400);
+  --color-neutral-500: var(--color-olive-500);
+  --color-neutral-600: var(--color-olive-600);
+  --color-neutral-700: var(--color-olive-700);
+  --color-neutral-800: var(--color-olive-800);
+  --color-neutral-900: var(--color-olive-900);
+}
+/* ---- Role map: dark ---- */
+:root, [data-mode="dark"], [data-family] {
+  --surface: var(--color-neutral-800);
+  --surface-raised: var(--color-neutral-700);
+  --surface-hover: var(--color-neutral-700);
+  --surface-pressed: var(--color-neutral-600);
+  --surface-disabled: var(--color-neutral-700);
+  --surface-inverse: var(--color-neutral-200);
+  --surface-inverse-hover: var(--color-neutral-300);
+  --surface-inverse-pressed: var(--color-neutral-400);
+  --text-primary: var(--color-neutral-200);
+  --text-secondary: var(--color-neutral-300);
+  --text-tertiary: var(--color-neutral-400);
+  --text-disabled: var(--color-neutral-500);
+  --text-inverse: var(--color-neutral-800);
+  --line: var(--color-neutral-600);
+  --line-strong: var(--color-neutral-500);
+}
+/* ---- Role map: light ---- */
+[data-mode="light"], [data-mode="light"] [data-family] {
+  --surface: var(--color-neutral-0);
+  --surface-raised: var(--color-neutral-50);
+  --surface-hover: var(--color-neutral-50);
+  --surface-pressed: var(--color-neutral-100);
+  --surface-disabled: var(--color-neutral-100);
+  --surface-inverse: var(--color-neutral-900);
+  --surface-inverse-hover: var(--color-neutral-800);
+  --surface-inverse-pressed: var(--color-neutral-700);
+  --text-primary: var(--color-neutral-900);
+  --text-secondary: var(--color-neutral-700);
+  --text-tertiary: var(--color-neutral-600);
+  --text-disabled: var(--color-neutral-400);
+  --text-inverse: var(--color-neutral-0);
+  --line: var(--color-neutral-200);
+  --line-strong: var(--color-neutral-400);
+}
+
+:root {
+  /* ---- Accent ---- */
+  --accent: #b95b34; /* Burnt orange, the brand's main accent (kit D10a) */
+  --focus: var(--accent); /* the ring that shows where the keyboard is */
+
+  /* ---- Typefaces ---- */
+  --face-header: "Semplicita Pro", serif;
+  --face-subheader: "Asta Sans Variable", system-ui, sans-serif;
+  --face-body: "Asta Sans Variable", system-ui, sans-serif; /* the hero's text face */
+  --face-label: "JetBrains Mono", ui-monospace, monospace;
+
+  /* ---- Headers ---- */
+  --header-xl: 72px;
+  --header-l: 56px;
+  --header-m: 40px;
+  --header-s: 32px;
+  --header-weight: 400;
+  --header-line: 1.08;
+  --header-track: -0.01em;
+
+  /* ---- Subheaders: always smaller than the smallest header ---- */
+  --subheader-xl: 26px;
+  --subheader-l: 22px;
+  --subheader-m: 19px;
+  --subheader-s: 17px;
+  --subheader-weight: 400;
+  --subheader-line: 1.35;
+  --subheader-track: -0.005em;
+
+  /* ---- Body (M is the homepage text: 15px, light, double spaced) ---- */
+  --body-xl: 20px;
+  --body-l: 17px;
+  --body-m: 15px;
+  --body-s: 13px;
+  --body-weight: 350;
+  --body-line: 2;
+  --body-track: -0.2px;
+
+  /* ---- Labels: JetBrains Mono, all caps, 100% line height, wide spacing ---- */
+  --label-xl: 14px;
+  --label-l: 12px;
+  --label-m: 11px;
+  --label-s: 10px;
+  --label-line: 1;
+  --label-spacing: 0.22em; /* the spacing on "Enter" and "Coming soon" */
+
+  /* ---- Buttons (Neesh, 2026-11-20: square corners, 32px tall) ---- */
+  --button-height: 32px;
+  --button-radius: 0px;
+  --button-height-s: 24px; /* small size (Neesh, 2026-11-20): tighter padding, Label S type */
+  --button-padding: 20px;
+  --button-padding-s: 12px;
+
+  /* ---- Icons (Phosphor) ---- */
+  --icon-s: 16px;
+  --icon-m: 20px;
+  --icon-l: 24px;
+}
