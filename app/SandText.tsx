@@ -54,8 +54,9 @@ export type Settings = {
   stream: number; // constant trickle of grains when nothing is scrolling
   glimmer: number; // how much the grains twinkle and glint
   grain: number; // grain size in CSS pixels
-  weight: number; // scroll friction: 0 = none, 1 = very heavy
+  weight: number; // wheel and trackpad scroll friction: 0 = none, 1 = very heavy
   speed: number; // how far one flick of the wheel or trackpad travels
+  touch: number; // phone scroll friction: 0 = the phone's own scroll, 1 = very heavy
 };
 
 // Colours. `sand` is the ramp a grain travels along as it drifts away: it
@@ -97,7 +98,7 @@ const rampAt = (stops: string[], t: number) => {
 // On a phone the sand starts a little lower than it is set (Neesh, 2026-11-18).
 const PHONE_LINE = 0.03;
 const lineOf = (s: { line: number }) => s.line + (typeof window !== "undefined" && window.innerWidth <= 720 ? PHONE_LINE : 0);
-const DEFAULTS: Settings = { start: 0.6, line: 0.53, soft: 30, launch: 1.3, settle: 0.22, rise: 0.25, back: 0.35, density: 0.7, pull: 0.95, stream: 0.2, glimmer: 0.05, grain: 0.5, weight: 0.8, speed: 0.4 };
+const DEFAULTS: Settings = { start: 0.6, line: 0.53, soft: 30, launch: 1.3, settle: 0.22, rise: 0.25, back: 0.35, density: 0.7, pull: 0.95, stream: 0.2, glimmer: 0.05, grain: 0.5, weight: 0.8, speed: 0.4, touch: 0.25 };
 
 const MAX = 140_000;
 const BUCKETS = 7;
@@ -729,15 +730,17 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
       autoRaf: true,
       lerp: 0.22 * Math.pow(1 - settings.weight, 1.6) + 0.012,
       wheelMultiplier: settings.speed,
-      touchMultiplier: Math.min(1, settings.speed * 3), // a finger needs a lighter hand than a wheel
-      // On a touch screen too: without this a phone scrolls in its own way and
-      // none of the drag above applies. The page then follows the finger at the
-      // same reduced speed, and coasts to a stop with the same weight.
-      syncTouch: true,
-      syncTouchLerp: Math.max(0.06, 0.22 * Math.pow(1 - settings.weight, 1.6) + 0.012),
+      // A finger is handled apart from the wheel, with its own friction. The page
+      // always follows the finger one to one (anything less feels like dragging
+      // through mud); friction only sets how far a flick coasts and how slowly
+      // it settles. At 0 the phone's own scroll is used untouched.
+      touchMultiplier: 1,
+      syncTouch: settings.touch > 0,
+      syncTouchLerp: 0.12 - 0.09 * settings.touch,
+      touchInertiaExponent: 1.95 - 0.45 * settings.touch,
     });
     return () => lenis.destroy();
-  }, [settings.weight, settings.speed]);
+  }, [settings.weight, settings.speed, settings.touch]);
 
   // `auto` is what a colour falls back to while it has not been picked.
   const swatch = (key: keyof Colors, label: string, auto?: string) => (
@@ -845,6 +848,7 @@ export default function SandText({ paragraphs, variant }: { paragraphs: string[]
         <Fold id="scroll" title="scroll">
           {slider("weight", "scroll friction", 0, 1, 0.05)}
           {slider("speed", "scroll speed", 0.2, 1.5, 0.05)}
+          {slider("touch", "phone scroll friction", 0, 1, 0.05)}
           {variant?.scroll}
         </Fold>
         <Fold id="colour" title="colour" open>
